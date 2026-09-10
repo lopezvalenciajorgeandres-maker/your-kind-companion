@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listClients, createClient } from "@/lib/clients.functions";
 import { listServices } from "@/lib/services.functions";
 import { completeAppointmentSession, createAppointment, deleteAppointment, listAppointments, updateAppointment } from "@/lib/appointments.functions";
-import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Link2, Lock, LockOpen, MessageCircle, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Link2, Lock, LockOpen, MessageCircle, Plus, Trash2, X } from "lucide-react";
 import { createBlock, deleteBlock, listHours, openSlot, saveHours } from "@/lib/schedule.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,8 @@ const SLOT_MIN = 15; // franjas de 15 minutos
 const SLOT_PX = 22; // px por franja de 15 min
 const SLOT_HEIGHT = SLOT_PX * (60 / SLOT_MIN); // px por hora
 const fmtSlot = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const fmtMoveLabel = (s: Date, e: Date) =>
+  `${s.toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short" })} ${fmtSlot(s.getHours() * 60 + s.getMinutes())}–${fmtSlot(e.getHours() * 60 + e.getMinutes())}`;
 
 type DayHours = {
   weekday: number;
@@ -96,6 +98,14 @@ function Agenda() {
     dayIndex: number;
     minutes: number;
     moved: boolean;
+  } | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    id: string;
+    clientName: string;
+    fromLabel: string;
+    toLabel: string;
+    starts_at: string;
+    ends_at: string;
   } | null>(null);
   const [resize, setResize] = useState<{
     id: string;
@@ -477,7 +487,15 @@ function Agenda() {
       starts.setHours(Math.floor(cur.startMin / 60), cur.startMin % 60, 0, 0);
       const ends = new Date(base);
       ends.setHours(Math.floor(cur.endMin / 60), cur.endMin % 60, 0, 0);
-      moveMut.mutate({ id: cur.id, starts_at: starts.toISOString(), ends_at: ends.toISOString() });
+      if (starts.getTime() === base.getTime() && ends.getTime() === new Date(appt.ends_at).getTime()) return;
+      setPendingMove({
+        id: cur.id,
+        clientName: appt.clients?.name ?? "la cita",
+        fromLabel: fmtMoveLabel(new Date(appt.starts_at), new Date(appt.ends_at)),
+        toLabel: fmtMoveLabel(starts, ends),
+        starts_at: starts.toISOString(),
+        ends_at: ends.toISOString(),
+      });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -517,10 +535,14 @@ function Agenda() {
       const oldStart = new Date(appt.starts_at);
       const duration = new Date(appt.ends_at).getTime() - oldStart.getTime();
       if (target.getTime() === oldStart.getTime()) return;
-      moveMut.mutate({
+      const newEnd = new Date(target.getTime() + duration);
+      setPendingMove({
         id: cur.id,
+        clientName: appt.clients?.name ?? "la cita",
+        fromLabel: fmtMoveLabel(oldStart, new Date(appt.ends_at)),
+        toLabel: fmtMoveLabel(target, newEnd),
         starts_at: target.toISOString(),
-        ends_at: new Date(target.getTime() + duration).toISOString(),
+        ends_at: newEnd.toISOString(),
       });
     };
     window.addEventListener("pointermove", onMove);
@@ -1618,6 +1640,52 @@ function Agenda() {
                 className="w-full sm:w-auto"
               >
                 {unblockMut.isPending ? "Abriendo…" : "Sí, abrir día"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {pendingMove && (
+        <Modal title="Cambiar horario de la cita" onClose={() => setPendingMove(null)}>
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <p className="text-base text-foreground">
+              ¿Deseas cambiar el horario de la cita de{" "}
+              <span className="font-semibold">{pendingMove.clientName}</span>?
+            </p>
+            <div className="mt-4 space-y-1 text-sm">
+              <p className="text-muted-foreground">
+                Antes: <span className="font-medium text-foreground">{pendingMove.fromLabel}</span>
+              </p>
+              <p className="text-muted-foreground">
+                Ahora: <span className="font-semibold text-primary">{pendingMove.toLabel}</span>
+              </p>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Esta alerta evita que la cita se mueva por error al deslizar las tarjetas.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPendingMove(null)}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  moveMut.mutate({ id: pendingMove.id, starts_at: pendingMove.starts_at, ends_at: pendingMove.ends_at });
+                  setPendingMove(null);
+                }}
+                disabled={moveMut.isPending}
+                className="w-full sm:w-auto"
+              >
+                {moveMut.isPending ? "Cambiando…" : "Sí, cambiar horario"}
               </Button>
             </div>
           </div>
