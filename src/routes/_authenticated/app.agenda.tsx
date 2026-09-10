@@ -1309,7 +1309,7 @@ function Agenda() {
       <div className="mt-8">
         <h2 className="font-serif text-2xl">Recordatorios de WhatsApp</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Envía el recordatorio de cita a cada cliente por WhatsApp (Web, Escritorio o copiando el mensaje). Solo aparecen citas pendientes.
+          Envía el recordatorio de la cita o un mensaje sutil sobre el saldo pendiente. Solo aparecen citas pendientes.
         </p>
         <div className="mt-4 space-y-2">
           {(appts.data ?? []).length === 0 && (
