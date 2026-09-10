@@ -1329,6 +1329,9 @@ function Agenda() {
                       (t) => t.client_id === (a as any).client_id && t.status === "open",
                     )) ?? null;
               const trPending = tr ? Math.max(0, tr.sessions_total - tr.sessions_done) : 0;
+              const debtRem = phone && tr && tr.balance_cents > 0
+                ? buildDebtReminder(phone, a, tr.balance_cents, tenant.currency)
+                : null;
               return (
                 <div
                   key={a.id}
@@ -1359,20 +1362,29 @@ function Agenda() {
 
                   {rem ? (
                     <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditAppt(a)}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
-                    >
-                      <Clock className="h-4 w-4" /> Editar horario
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setReminder(rem)}
-                      className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-                    >
-                      <MessageCircle className="h-4 w-4" /> Enviar recordatorio
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditAppt(a)}
+                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
+                      >
+                        <Clock className="h-4 w-4" /> Editar horario
+                      </button>
+                      {debtRem && (
+                        <button
+                          type="button"
+                          onClick={() => setReminder(debtRem)}
+                          className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                        >
+                          <MessageCircle className="h-4 w-4" /> Recordar saldo
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setReminder(rem)}
+                        className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                      >
+                        <MessageCircle className="h-4 w-4" /> Recordar cita
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-wrap items-center gap-2">
