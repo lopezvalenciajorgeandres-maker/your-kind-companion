@@ -14,7 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          client_id: string
+          created_at: string
+          ends_at: string
+          id: string
+          notes: string | null
+          owner_id: string
+          service_id: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          ends_at: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          service_id?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          ends_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          service_id?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profiles: {
+        Row: {
+          address: string | null
+          booking_phone: string | null
+          business_name: string
+          contact_phone: string | null
+          created_at: string
+          facebook: string | null
+          instagram: string | null
+          manager_name: string | null
+          onboarded: boolean
+          owner_name: string
+          tiktok: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          booking_phone?: string | null
+          business_name: string
+          contact_phone?: string | null
+          created_at?: string
+          facebook?: string | null
+          instagram?: string | null
+          manager_name?: string | null
+          onboarded?: boolean
+          owner_name: string
+          tiktok?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          booking_phone?: string | null
+          business_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          facebook?: string | null
+          instagram?: string | null
+          manager_name?: string | null
+          onboarded?: boolean
+          owner_name?: string
+          tiktok?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          owner_id: string
+          phone: string | null
+          service_id: string | null
+          service_price_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          phone?: string | null
+          service_id?: string | null
+          service_price_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          service_id?: string | null
+          service_price_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          duration_min: number
+          id: string
+          name: string
+          owner_id: string
+          price_cents: number
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          name: string
+          owner_id: string
+          price_cents?: number
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          name?: string
+          owner_id?: string
+          price_cents?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
