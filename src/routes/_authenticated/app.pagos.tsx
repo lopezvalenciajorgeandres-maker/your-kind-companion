@@ -98,6 +98,7 @@ function Payments() {
       qc.invalidateQueries({ queryKey: ["receivables"] });
       qc.invalidateQueries({ queryKey: ["treatments"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["appts"] });
       toast.success("Pago eliminado");
     },
   });
@@ -277,6 +278,8 @@ function Payments() {
               qc.invalidateQueries({ queryKey: ["receivables"] });
               qc.invalidateQueries({ queryKey: ["treatments"] });
               qc.invalidateQueries({ queryKey: ["dashboard"] });
+              qc.invalidateQueries({ queryKey: ["appts"] });
+      qc.invalidateQueries({ queryKey: ["appts"] });
               toast.success("Pago registrado");
               setModal(false);
               setPreselected(null);

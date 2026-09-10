@@ -136,11 +136,46 @@ export const deletePayment = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
+    // Se guarda el tratamiento asociado para poder reabrirlo si queda saldo pendiente.
+    const { data: pay } = await context.supabase
+      .from("payments")
+      .select("treatment_id")
+      .eq("id", data.id)
+      .eq("business_id", businessId)
+      .maybeSingle();
+
     const { error } = await context.supabase
       .from("payments")
       .delete()
       .eq("id", data.id)
       .eq("business_id", businessId);
     if (error) throw new Error(error.message);
+
+    // Si el tratamiento estaba cerrado y ahora queda saldo, se reabre automáticamente.
+    if (pay?.treatment_id) {
+      const [{ data: tr }, { data: pays }] = await Promise.all([
+        context.supabase
+          .from("treatments")
+          .select("id, total_cents, status")
+          .eq("id", pay.treatment_id)
+          .eq("business_id", businessId)
+          .maybeSingle(),
+        context.supabase
+          .from("payments")
+          .select("amount_cents")
+          .eq("business_id", businessId)
+          .eq("treatment_id", pay.treatment_id),
+      ]);
+      if (tr) {
+        const paid = (pays ?? []).reduce((s, p) => s + (p.amount_cents ?? 0), 0);
+        if (tr.status === "closed" && (tr.total_cents ?? 0) - paid > 0) {
+          await context.supabase
+            .from("treatments")
+            .update({ status: "open", closed_at: null })
+            .eq("id", tr.id)
+            .eq("business_id", businessId);
+        }
+      }
+    }
     return { ok: true };
   });

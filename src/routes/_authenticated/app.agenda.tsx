@@ -1365,13 +1365,6 @@ function Agenda() {
 
                   {rem ? (
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditAppt(a)}
-                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
-                      >
-                        <Clock className="h-4 w-4" /> Editar horario
-                      </button>
                       {debtRem && (
                         <button
                           type="button"
@@ -1390,16 +1383,7 @@ function Agenda() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditAppt(a)}
-                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
-                      >
-                        <Clock className="h-4 w-4" /> Editar horario
-                      </button>
-                      <span className="text-xs text-muted-foreground">Sin teléfono registrado</span>
-                    </div>
+                    <span className="text-xs text-muted-foreground">Sin teléfono registrado</span>
                   )}
                 </div>
               );
@@ -1408,19 +1392,21 @@ function Agenda() {
 
         {/* Saldos pendientes de tratamientos finalizados */}
         <div className="mt-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Saldos pendientes de tratamientos finalizados</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Saldos pendientes</h3>
           {(() => {
-            const pendingClientIds = new Set(
+            // Se excluyen los tratamientos que ya tienen una cita pendiente listada arriba,
+            // para no duplicar el recordatorio de saldo del mismo tratamiento.
+            const pendingTreatmentIds = new Set(
               (appts.data ?? [])
-                .filter((a) => a.status !== "completed")
-                .map((a) => (a as any).client_id),
+                .filter((a) => a.status !== "completed" && a.status !== "cancelled" && a.treatment_id)
+                .map((a) => a.treatment_id as string),
             );
             const debtTreatments = (treatments.data ?? []).filter(
-              (t) => t.status === "closed" && t.balance_cents > 0 && !pendingClientIds.has(t.client_id),
+              (t) => t.balance_cents > 0 && !pendingTreatmentIds.has(t.id),
             );
             if (debtTreatments.length === 0) {
               return (
-                <p className="text-sm text-muted-foreground">No hay saldos pendientes de tratamientos finalizados.</p>
+                <p className="text-sm text-muted-foreground">No hay saldos pendientes por cobrar.</p>
               );
             }
             return debtTreatments.map((t) => {
