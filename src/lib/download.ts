@@ -37,6 +37,11 @@ export function downloadExcelSheets(sheets: Record<string, Array<Record<string, 
   const book = XLSX.utils.book_new();
   for (const [name, rows] of Object.entries(sheets)) {
     const sheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{}]);
+    const columns = rows.length ? Object.keys(rows[0] ?? {}) : [];
+    sheet["!cols"] = columns.map((column) => ({
+      wch: Math.min(42, Math.max(12, column.length + 2, ...rows.slice(0, 100).map((row) => String(row[column] ?? "").length + 2))),
+    }));
+    if (sheet["!ref"]) sheet["!autofilter"] = { ref: sheet["!ref"] };
     XLSX.utils.book_append_sheet(book, sheet, name.slice(0, 31));
   }
   XLSX.writeFile(book, `${filename}-${new Date().toISOString().slice(0, 10)}.xlsx`);

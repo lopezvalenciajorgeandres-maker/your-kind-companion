@@ -6,6 +6,16 @@ import { Download, Upload } from "lucide-react";
 import { exportFullBackup, importFullBackup } from "@/lib/backup.functions";
 import { downloadExcelSheets } from "@/lib/download";
 import { parseWorkbook } from "@/lib/import-parse";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const base =
   "inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary disabled:opacity-60";
@@ -16,6 +26,7 @@ export function BackupButtons() {
   const qc = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"export" | "import" | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   async function onExport() {
     setBusy("export");
@@ -35,9 +46,18 @@ export function BackupButtons() {
     try {
       const sheets = await parseWorkbook(file);
       const res = await doImport({ data: { sheets } });
-      toast.success(
-        `Importado: ${res.clientes} clientes · ${res.citas} citas · ${res.pagos} pagos · ${res.servicios} servicios`,
+      const totals = Object.values(res.sections as Record<string, { added: number; updated: number; skipped: number }>).reduce(
+        (sum, section) => ({
+          added: sum.added + section.added,
+          updated: sum.updated + section.updated,
+          skipped: sum.skipped + section.skipped,
+        }),
+        { added: 0, updated: 0, skipped: 0 },
       );
+      toast.success(
+        `Restauración lista: ${totals.added} agregados · ${totals.updated} actualizados · ${totals.skipped} omitidos`,
+      );
+      if (res.warnings.length) toast.warning(`${res.warnings.length} aviso(s): revisa registros sin relación`);
       qc.invalidateQueries();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo importar");
@@ -56,7 +76,7 @@ export function BackupButtons() {
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) void onFile(f);
+          if (f) setPendingFile(f);
         }}
       />
       <button type="button" disabled={busy !== null} onClick={onExport} className={base}>
@@ -65,6 +85,28 @@ export function BackupButtons() {
       <button type="button" disabled={busy !== null} onClick={() => input.current?.click()} className={base}>
         <Upload className="h-4 w-4" /> {busy === "import" ? "Importando..." : "Importar todo"}
       </button>
+      <AlertDialog open={pendingFile !== null} onOpenChange={(open) => { if (!open) setPendingFile(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Combinar esta copia con tus datos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se actualizarán las coincidencias y se agregarán los registros faltantes. No se duplicarán los datos existentes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const file = pendingFile;
+                setPendingFile(null);
+                if (file) void onFile(file);
+              }}
+            >
+              Sí, combinar datos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
