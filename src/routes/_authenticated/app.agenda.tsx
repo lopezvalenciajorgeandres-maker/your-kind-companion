@@ -2177,7 +2177,9 @@ function WhatsAppReminderModal({ reminder, onClose }: { reminder: WhatsAppRemind
       <div className="w-full max-w-md rounded-2xl bg-card p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-serif text-xl">Recordatorio WhatsApp</h3>
+            <h3 className="font-serif text-xl">
+              {reminder.kind === "debt" ? "Recordatorio de saldo pendiente" : "Recordatorio de cita"}
+            </h3>
             <p className="text-sm text-muted-foreground">{reminder.clientName} · +{reminder.phone}</p>
           </div>
           <button type="button" onClick={onClose} className="p-1" aria-label="Cerrar recordatorio"><X className="h-4 w-4" /></button>
