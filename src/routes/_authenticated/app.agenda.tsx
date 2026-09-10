@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ClientForm, type ClientPayload } from "@/components/app/client-form";
 import { Modal } from "@/components/app/kit";
+import { SignaturePad } from "@/components/app/signature-pad";
 import { BackupButtons } from "@/components/app/backup-buttons";
 import { closeTreatment, createTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
 import { useTenant } from "@/lib/use-tenant";
@@ -82,6 +83,7 @@ function Agenda() {
   const [modal, setModal] = useState(false);
   const [reminder, setReminder] = useState<WhatsAppReminder | null>(null);
   const [editAppt, setEditAppt] = useState<any | null>(null);
+  const [signAppt, setSignAppt] = useState<any | null>(null);
   const [confirmUnlockDay, setConfirmUnlockDay] = useState<Date | null>(null);
   const [confirmUnlockSlot, setConfirmUnlockSlot] = useState<{ d: Date; m: number } | null>(null);
   const [confirmOffHours, setConfirmOffHours] = useState<{ d: Date; m: number } | null>(null);
@@ -372,14 +374,30 @@ function Agenda() {
   });
 
   const completeApptMut = useMutation({
-    mutationFn: (v: { id: string; completed: boolean }) => completeAppt({ data: v }),
+    mutationFn: (v: {
+      id: string;
+      completed: boolean;
+      signature_data_url?: string | null;
+      signed_by_name?: string | null;
+    }) => completeAppt({ data: v }),
     onSuccess: (_r, v) => {
       qc.invalidateQueries({ queryKey: ["appts"] });
       qc.invalidateQueries({ queryKey: ["treatments"] });
-      toast.success(v.completed ? "Sesión marcada como realizada" : "Sesión marcada como no realizada");
+      toast.success(
+        v.completed ? "Sesión confirmada con la firma del cliente" : "Sesión marcada como no realizada",
+      );
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo actualizar la sesión"),
   });
+
+  // Al chulear una sesión pedimos la firma del cliente; al deshacer, no.
+  function toggleSession(a: any) {
+    if (a.status === "completed") {
+      completeApptMut.mutate({ id: a.id, completed: false });
+      return;
+    }
+    setSignAppt(a);
+  }
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => {
@@ -1141,7 +1159,7 @@ function Agenda() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              completeApptMut.mutate({ id: a.id, completed: a.status !== "completed" });
+                              toggleSession(a);
                             }}
                             onPointerDown={(e) => e.stopPropagation()}
                             className={`h-7 w-7 rounded-full shadow-md ring-2 ring-background transition ${
@@ -1269,7 +1287,7 @@ function Agenda() {
                         {a.status !== "cancelled" && (
                           <button
                             type="button"
-                            onClick={() => completeApptMut.mutate({ id: a.id, completed: a.status !== "completed" })}
+                            onClick={() => toggleSession(a)}
                             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
                               a.status === "completed"
                                 ? "bg-emerald-500 text-white hover:bg-emerald-600"
@@ -1377,6 +1395,32 @@ function Agenda() {
         <WhatsAppReminderModal
           reminder={reminder}
           onClose={() => setReminder(null)}
+        />
+      )}
+
+      {signAppt && (
+        <SignaturePad
+          clientName={
+            [signAppt.client?.full_name, signAppt.client?.last_name].filter(Boolean).join(" ") || undefined
+          }
+          subtitle={`${signAppt.client?.full_name ?? "El cliente"} firma para confirmar que la cita del ${new Date(
+            signAppt.starts_at,
+          ).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })} se cumplió. Puede firmar con el dedo en celular o tablet, o con el touchpad en el computador.`}
+          onCancel={() => setSignAppt(null)}
+          onDone={(signature, signedBy) => {
+            completeApptMut.mutate({
+              id: signAppt.id,
+              completed: true,
+              signature_data_url: signature,
+              signed_by_name: signedBy || null,
+            });
+            setSignAppt(null);
+          }}
         />
       )}
 
