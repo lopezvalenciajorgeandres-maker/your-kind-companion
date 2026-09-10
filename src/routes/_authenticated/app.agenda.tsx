@@ -1159,7 +1159,7 @@ function Agenda() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              completeApptMut.mutate({ id: a.id, completed: a.status !== "completed" });
+                              toggleSession(a);
                             }}
                             onPointerDown={(e) => e.stopPropagation()}
                             className={`h-7 w-7 rounded-full shadow-md ring-2 ring-background transition ${
