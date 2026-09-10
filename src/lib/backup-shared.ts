@@ -15,6 +15,9 @@ export const SHEETS = {
   hours: "Horarios",
   blockedDates: "Fechas Bloqueadas",
   balances: "Saldos",
+  treatmentBalances: "Saldos Tratamientos",
+  reminders: "Recordatorios WhatsApp",
+  notifications: "Notificaciones",
 } as const;
 
 export type BackupCell = string | number | null;

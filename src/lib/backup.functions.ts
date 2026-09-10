@@ -66,7 +66,7 @@ export const exportFullBackup = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
     const sb = context.supabase as any;
-    const names = ["businesses", "clients", "services", "professionals", "professional_services", "packages", "treatments", "appointments", "package_sessions", "payments", "expenses", "client_notes", "business_hours", "blocked_dates"] as const;
+    const names = ["businesses", "clients", "services", "professionals", "professional_services", "packages", "treatments", "appointments", "package_sessions", "payments", "expenses", "client_notes", "business_hours", "blocked_dates", "notifications"] as const;
     const responses = await Promise.all(names.map((table) => sb.from(table).select("*").eq(table === "businesses" ? "id" : "business_id", businessId)));
     for (const response of responses) if (response.error) throw new Error(response.error.message);
     const data = Object.fromEntries(names.map((name, i) => [name, responses[i]?.data ?? []])) as Record<string, any[]>;
@@ -89,8 +89,15 @@ export const exportFullBackup = createServerFn({ method: "POST" })
       if (p.client_id) add(paid, p.client_id, p.amount_cents ?? 0);
       if (p.client_id && !p.treatment_id && !p.appointment_id) add(charged, p.client_id, p.total_cents ?? p.amount_cents ?? 0);
     }
+    const paidByTreatment = new Map<string, number>();
+    for (const p of payments) if (p.treatment_id) add(paidByTreatment, p.treatment_id, p.amount_cents ?? 0);
+    const clientById = new Map(clients.map((c) => [c.id, c]));
+    const contactOf = (id: string | null) => { const c = id ? clientById.get(id) : null; return c ? (c.whatsapp || c.phone || "") : ""; };
+    const treatmentBalance = (t: any) => Math.max((t.total_cents ?? 0) - (paidByTreatment.get(t.id) ?? 0), 0);
+    const pendingAppointments = appointments.filter((a) => a.status !== "completed" && a.status !== "cancelled");
+    const apptTreatmentClients = new Set(pendingAppointments.filter((a) => a.treatment_id).map((a) => a.client_id));
     const sheets: BackupSheets = {
-      [SHEETS.control]: [{ version_respaldo: 2, generado_iso: new Date().toISOString(), negocio_id: businessId, descripcion: "Respaldo integral ELEVA" }, ...names.filter((n) => n !== "businesses").map((n) => ({ seccion: n, registros: data[n]?.length ?? 0 }))],
+      [SHEETS.control]: [{ version_respaldo: 3, generado_iso: new Date().toISOString(), negocio_id: businessId, descripcion: "Respaldo integral ELEVA" }, ...names.filter((n) => n !== "businesses").map((n) => ({ seccion: n, registros: data[n]?.length ?? 0 }))],
       [SHEETS.business]: business ? [{ id: business.id, nombre: business.name, tipo: business.business_type, descripcion: business.description ?? "", ciudad: business.city ?? "", pais: business.country ?? "", direccion: business.address ?? "", telefono: business.phone ?? "", whatsapp: business.whatsapp ?? "", instagram: business.instagram ?? "", sitio_web: business.website ?? "", logo_url: business.logo_url ?? "", zona_horaria: business.timezone, moneda: business.currency, reservas_activas: business.booking_enabled ? "si" : "no" }] : [],
       [SHEETS.clients]: clients.map((c) => ({ id: c.id, nombre: c.full_name, apellido: c.last_name ?? "", telefono: c.phone ?? "", whatsapp: c.whatsapp ?? "", email: c.email ?? "", nacimiento: c.birthdate ?? "", genero: c.gender ?? "", direccion: c.address ?? "", municipio: c.city ?? "", departamento: c.state ?? "", origen: c.source ?? "", notas: c.notes ?? "", servicio_id: c.service_id ?? "", precio_servicio_centavos: c.service_price_cents ?? "", creado_iso: c.created_at })),
       [SHEETS.services]: services.map((s) => ({ id: s.id, nombre: s.name, categoria: s.category ?? "", descripcion: s.description ?? "", duracion_min: s.duration_min, precio_centavos: s.price_cents, precio: s.price_cents / 100, color: s.color, activo: s.active ? "si" : "no", profesional_id: s.professional_id ?? "", creado_iso: s.created_at })),
@@ -106,6 +113,12 @@ export const exportFullBackup = createServerFn({ method: "POST" })
       [SHEETS.hours]: data.business_hours.map((h) => ({ id: h.id, dia: h.weekday, profesional_id: h.professional_id ?? "", profesional: professionalName.get(h.professional_id) ?? "", abre: h.open_time, cierra: h.close_time, descanso_inicio: h.break_start ?? "", descanso_fin: h.break_end ?? "", cerrado: h.closed ? "si" : "no" })),
       [SHEETS.blockedDates]: data.blocked_dates.map((b) => ({ id: b.id, inicio_iso: b.starts_at, fin_iso: b.ends_at, profesional_id: b.professional_id ?? "", profesional: professionalName.get(b.professional_id) ?? "", motivo: b.reason ?? "", tipo: b.kind, creado_iso: b.created_at })),
       [SHEETS.balances]: clients.map((c) => ({ cliente_id: c.id, cliente: clientName.get(c.id) ?? "", telefono: c.phone ?? "", total_servicios: (charged.get(c.id) ?? 0) / 100, abonado: (paid.get(c.id) ?? 0) / 100, saldo_pendiente: Math.max((charged.get(c.id) ?? 0) - (paid.get(c.id) ?? 0), 0) / 100 })),
+      [SHEETS.treatmentBalances]: treatments.map((t) => ({ tratamiento_id: t.id, cliente_id: t.client_id, cliente: clientName.get(t.client_id) ?? "", tratamiento: t.name ?? serviceName.get(t.service_id) ?? "", servicio_id: t.service_id ?? "", estado: t.status, sesiones: t.sessions_total, total: (t.total_cents ?? 0) / 100, abonado: (paidByTreatment.get(t.id) ?? 0) / 100, saldo_pendiente: treatmentBalance(t) / 100, cerrado_iso: t.closed_at ?? "" })),
+      [SHEETS.reminders]: [
+        ...pendingAppointments.map((a) => ({ tipo: "recordatorio_cita", cita_id: a.id, tratamiento_id: a.treatment_id ?? "", cliente_id: a.client_id, cliente: clientName.get(a.client_id) ?? "", whatsapp: contactOf(a.client_id), servicio: serviceName.get(a.service_id) ?? "", inicio_iso: a.starts_at, estado_cita: a.status, saldo_pendiente: a.treatment_id ? treatmentBalance(treatments.find((t) => t.id === a.treatment_id) ?? {}) / 100 : 0 })),
+        ...treatments.filter((t) => treatmentBalance(t) > 0 && !apptTreatmentClients.has(t.client_id)).map((t) => ({ tipo: "recordatorio_saldo", cita_id: "", tratamiento_id: t.id, cliente_id: t.client_id, cliente: clientName.get(t.client_id) ?? "", whatsapp: contactOf(t.client_id), servicio: t.name ?? serviceName.get(t.service_id) ?? "", inicio_iso: "", estado_cita: t.status, saldo_pendiente: treatmentBalance(t) / 100 })),
+      ],
+      [SHEETS.notifications]: data.notifications.map((n) => ({ id: n.id, tipo: n.kind, titulo: n.title, cuerpo: n.body ?? "", leido_iso: n.read_at ?? "", creado_iso: n.created_at })),
     };
     const { error } = await sb.from("backups").insert({ business_id: businessId, created_by: context.userId, size_bytes: JSON.stringify(sheets).length, destination: "download" });
     if (error) throw new Error(error.message);
@@ -122,7 +135,7 @@ export const importFullBackup = createServerFn({ method: "POST" })
     const sb = context.supabase as any;
     const get = (name: string): Row[] => (Object.entries(data.sheets).find(([key]) => norm(key) === norm(name))?.[1] as Row[] | undefined) ?? [];
     if (!get(SHEETS.clients).length && !get(SHEETS.services).length && !get(SHEETS.appointments).length) throw new Error("El archivo no parece ser una copia válida de ELEVA");
-    const sections: Record<string, Count> = Object.fromEntries(["negocio", "clientes", "servicios", "profesionales", "servicios_profesionales", "paquetes", "tratamientos", "citas", "sesiones_paquete", "pagos", "gastos", "notas", "horarios", "bloqueos"].map((k) => [k, result()]));
+    const sections: Record<string, Count> = Object.fromEntries(["negocio", "clientes", "servicios", "profesionales", "servicios_profesionales", "paquetes", "tratamientos", "citas", "sesiones_paquete", "pagos", "gastos", "notas", "horarios", "bloqueos", "notificaciones"].map((k) => [k, result()]));
     const warnings: string[] = [];
 
     const merge = async (table: string, rows: Row[], key: string, build: (r: Row) => Row | null, natural: (r: Row, existing: any[]) => any | undefined, map?: Map<string, string>) => {
@@ -205,6 +218,8 @@ export const importFullBackup = createServerFn({ method: "POST" })
     await merge("client_notes", get(SHEETS.notes), "notas", (r) => { const client_id = resolve(r, ["cliente_id"], ["cliente"], clientMap, clientsNow, (x) => [x.full_name, x.last_name ?? ""].join(" ").trim()); const body = pick(r, ["nota", "notas", "body"]); return client_id && body ? { client_id, author_id: context.userId, body, private: yes(pick(r, ["privada", "private"])) } : null; }, (r, xs) => xs.find((x) => x.client_id === resolve(r, ["cliente_id"], ["cliente"], clientMap, clientsNow, (y) => [y.full_name, y.last_name ?? ""].join(" ").trim()) && norm(x.body) === norm(pick(r, ["nota", "notas", "body"]))));
     await merge("business_hours", get(SHEETS.hours), "horarios", (r) => { const weekday = Math.round(num(pick(r, ["dia", "weekday"]))); const open_time = pick(r, ["abre", "open_time"]); const close_time = pick(r, ["cierra", "close_time"]); return weekday >= 0 && weekday <= 6 && open_time && close_time ? { professional_id: resolve(r, ["profesional_id"], ["profesional"], proMap, prosNow, (x) => x.full_name), weekday, open_time, close_time, break_start: pick(r, ["descanso_inicio", "break_start"]) || null, break_end: pick(r, ["descanso_fin", "break_end"]) || null, closed: yes(pick(r, ["cerrado", "closed"])) } : null; }, (r, xs) => xs.find((x) => x.weekday === Math.round(num(pick(r, ["dia", "weekday"]))) && (x.professional_id ?? null) === resolve(r, ["profesional_id"], ["profesional"], proMap, prosNow, (y) => y.full_name)));
     await merge("blocked_dates", get(SHEETS.blockedDates), "bloqueos", (r) => { const starts_at = iso(pick(r, ["inicio_iso", "starts_at"])); const ends_at = iso(pick(r, ["fin_iso", "ends_at"])); return starts_at && ends_at ? { professional_id: resolve(r, ["profesional_id"], ["profesional"], proMap, prosNow, (x) => x.full_name), starts_at, ends_at, reason: pick(r, ["motivo", "reason"]) || null, kind: pick(r, ["tipo", "kind"]) || "bloqueo" } : null; }, (r, xs) => xs.find((x) => x.starts_at === iso(pick(r, ["inicio_iso", "starts_at"])) && x.ends_at === iso(pick(r, ["fin_iso", "ends_at"]))));
+
+    await merge("notifications", get(SHEETS.notifications), "notificaciones", (r) => { const title = pick(r, ["titulo", "title"]); if (!title) return null; return { kind: pick(r, ["tipo", "kind"]) || "info", title, body: pick(r, ["cuerpo", "body"]) || null, read_at: iso(pick(r, ["leido_iso", "read_at"])), created_at: iso(pick(r, ["creado_iso"])) ?? undefined }; }, (r, xs) => xs.find((x: any) => norm(x.title) === norm(pick(r, ["titulo", "title"])) && String(x.created_at ?? "") === String(iso(pick(r, ["creado_iso"])) ?? x.created_at)));
 
     return { sections, warnings: [...new Set(warnings)].slice(0, 20) };
   });
