@@ -1519,6 +1519,7 @@ function Agenda() {
               completed: true,
               signature_data_url: signature,
               signed_by_name: signedBy || null,
+              data_consent: true,
             });
             setSignAppt(null);
           }}
