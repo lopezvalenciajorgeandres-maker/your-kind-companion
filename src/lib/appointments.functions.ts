@@ -107,12 +107,38 @@ export const deleteAppointment = createServerFn({ method: "POST" })
 
 export const completeAppointmentSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), completed: z.boolean() }).parse(i))
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        completed: z.boolean(),
+        signature_data_url: z
+          .string()
+          .startsWith("data:image/")
+          .max(2_000_000)
+          .nullable()
+          .optional(),
+        signed_by_name: z.string().trim().max(120).nullable().optional(),
+      })
+      .parse(i),
+  )
   .handler(async ({ data, context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
+    const patch: Record<string, unknown> = { status: data.completed ? "completed" : "scheduled" };
+    if (data.completed) {
+      if (data.signature_data_url) {
+        patch.signature_data_url = data.signature_data_url;
+        patch.signed_at = new Date().toISOString();
+        patch.signed_by_name = data.signed_by_name ?? null;
+      }
+    } else {
+      patch.signature_data_url = null;
+      patch.signed_at = null;
+      patch.signed_by_name = null;
+    }
     const { error } = await context.supabase
       .from("appointments")
-      .update({ status: data.completed ? "completed" : "scheduled" })
+      .update(patch)
       .eq("id", data.id)
       .eq("business_id", businessId);
     if (error) throw new Error(error.message);
