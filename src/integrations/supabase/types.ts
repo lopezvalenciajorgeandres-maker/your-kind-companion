@@ -556,6 +556,59 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount_cents: number
+          business_id: string
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          method: string
+          notes: string | null
+          spent_at: string
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          business_id: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          method?: string
+          notes?: string | null
+          spent_at?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          business_id?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          spent_at?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           business_id: string
@@ -752,6 +805,7 @@ export type Database = {
         Row: {
           amount_cents: number
           appointment_id: string | null
+          bank: string | null
           business_id: string
           client_id: string | null
           created_at: string
@@ -767,6 +821,7 @@ export type Database = {
         Insert: {
           amount_cents?: number
           appointment_id?: string | null
+          bank?: string | null
           business_id: string
           client_id?: string | null
           created_at?: string
@@ -782,6 +837,7 @@ export type Database = {
         Update: {
           amount_cents?: number
           appointment_id?: string | null
+          bank?: string | null
           business_id?: string
           client_id?: string | null
           created_at?: string
