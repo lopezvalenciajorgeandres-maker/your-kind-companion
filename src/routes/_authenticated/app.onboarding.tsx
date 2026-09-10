@@ -199,9 +199,7 @@ function Onboarding() {
             <>
               <p className="text-sm text-muted-foreground">Añade tus servicios principales. Podrás crear más después.</p>
               {services.map((s, i) => (
-                <Field key={i} label="Servicio">
-                  <input className={inputClass} value={s.name} onChange={(e) => setServices((p) => p.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Limpieza facial" />
-                </Field>
+                <input key={i} className={inputClass} value={s.name} onChange={(e) => setServices((p) => p.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Limpieza facial" />
               ))}
               <button type="button" className={btnGhost} onClick={() => setServices((p) => [...p, { name: "", sessions: 1 }])}>
                 Añadir otro servicio
