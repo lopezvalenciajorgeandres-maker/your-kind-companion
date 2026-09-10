@@ -6,3 +6,5 @@
   - [x] Aplicar migraciones (archivos consolidados; duplicados exactos omitidos)
   - [x] Activar inicio con Google
   - [x] Verificar compilación (tsgo sin errores)
+
+- [ ] Completar respaldo Excel y restauración sin duplicados
