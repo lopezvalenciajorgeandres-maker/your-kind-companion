@@ -1086,13 +1086,10 @@ function Agenda() {
                   const trFullyPaid = !!tr && tr.total_cents > 0 && tr.paid_cents >= tr.total_cents;
                   const isCompleted = a.status === "completed";
                   const hasPendingBalance = !!tr && tr.balance_cents > 0;
-                  const hasPartialPayment = !!tr && tr.paid_cents > 0 && tr.balance_cents > 0;
 
                   let baseColor: string;
                   if (treatmentPaidAndClosed) {
                     baseColor = "#10B981"; // verde intenso: tratamiento finalizado y pagado
-                  } else if (hasPartialPayment) {
-                    baseColor = "#34D399"; // verde diferencial: cliente ha realizado abonos
                   } else if (isCompleted) {
                     baseColor = "#8FB996";
                   } else if (treatmentPaidWithPendingSessions) {
@@ -1105,11 +1102,9 @@ function Agenda() {
 
                   // Mitad superior verde cuando la sesión ya fue realizada;
                   // mitad inferior ámbar cuando aún hay saldo pendiente por pagar.
-                  // Las tarjetas con abonos se mantienen todo verde para diferenciarlas.
-                  const isAllGreen = treatmentPaidAndClosed || hasPartialPayment;
                   const topColor = isCompleted ? "#10B981" : baseColor;
                   const bottomColor = hasPendingBalance ? "#F59E0B" : baseColor;
-                  const splitCard = !isAllGreen && (isCompleted || hasPendingBalance);
+                  const splitCard = isCompleted || hasPendingBalance;
                   const cardColor = splitCard
                     ? `linear-gradient(180deg, ${topColor} 50%, ${bottomColor} 50%)`
                     : baseColor;
