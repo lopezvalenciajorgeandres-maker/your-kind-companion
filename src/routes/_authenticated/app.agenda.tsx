@@ -1408,15 +1408,17 @@ function Agenda() {
 
         {/* Saldos pendientes de tratamientos finalizados */}
         <div className="mt-6 space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Saldos pendientes de tratamientos finalizados</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Saldos pendientes</h3>
           {(() => {
-            const pendingClientIds = new Set(
+            // Se excluyen los tratamientos que ya tienen una cita pendiente listada arriba,
+            // para no duplicar el recordatorio de saldo del mismo tratamiento.
+            const pendingTreatmentIds = new Set(
               (appts.data ?? [])
-                .filter((a) => a.status !== "completed")
-                .map((a) => (a as any).client_id),
+                .filter((a) => a.status !== "completed" && a.status !== "cancelled" && a.treatment_id)
+                .map((a) => a.treatment_id as string),
             );
             const debtTreatments = (treatments.data ?? []).filter(
-              (t) => t.status === "closed" && t.balance_cents > 0 && !pendingClientIds.has(t.client_id),
+              (t) => t.balance_cents > 0 && !pendingTreatmentIds.has(t.id),
             );
             if (debtTreatments.length === 0) {
               return (
