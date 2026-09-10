@@ -2029,6 +2029,9 @@ type WhatsAppReminder = {
   message: string;
   webUrl: string;
   desktopUrl: string;
+  kind: "appointment" | "debt";
+  debtAmount?: number;
+  currency?: string;
 };
 
 function buildWhatsAppReminder(phone: string, a: any): WhatsAppReminder | null {
@@ -2049,6 +2052,30 @@ function buildWhatsAppReminder(phone: string, a: any): WhatsAppReminder | null {
     message: msg,
     webUrl: `https://web.whatsapp.com/send/?phone=${num}&text=${encoded}&app_absent=0`,
     desktopUrl: `whatsapp://send?phone=${num}&text=${encoded}`,
+    kind: "appointment",
+  };
+}
+
+function buildDebtReminder(phone: string, a: any, balanceCents: number, currency: string): WhatsAppReminder | null {
+  const num = normalizePhone(phone);
+  if (!num) return null;
+  const nombre = a.client?.full_name ?? "";
+  const servicio = a.service?.name ? `tu ${a.service.name}` : "tu servicio";
+  const monto = formatMoney(balanceCents, currency);
+  const msg =
+    `Hola ${nombre} 💜, esperamos que estés muy bien. ` +
+    `Te escribimos con mucho cariño para recordarte que aún tienes un saldo pendiente de ${monto} correspondiente a ${servicio}. ` +
+    `Si ya realizaste el pago, por favor ignora este mensaje. De lo contrario, quedamos atentos para ayudarte con cualquier duda. ¡Gracias por confiar en nosotros! ✨`;
+  const encoded = encodeURIComponent(msg);
+  return {
+    phone: num,
+    clientName: nombre || "Paciente",
+    message: msg,
+    webUrl: `https://web.whatsapp.com/send/?phone=${num}&text=${encoded}&app_absent=0`,
+    desktopUrl: `whatsapp://send?phone=${num}&text=${encoded}`,
+    kind: "debt",
+    debtAmount: balanceCents,
+    currency,
   };
 }
 
