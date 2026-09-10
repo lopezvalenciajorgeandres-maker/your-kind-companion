@@ -5,13 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { updateMyBusiness } from "@/lib/business.functions";
 import { createBlock, deleteBlock, listHours, saveHours } from "@/lib/schedule.functions";
-import { createBackup, listBackups } from "@/lib/export.functions";
 import { useTenant } from "@/lib/use-tenant";
 import { BUSINESS_TYPES } from "@/lib/plan";
-import { downloadJson } from "@/lib/download";
 import { Field, PageHeader, Panel, btnGhost, btnPrimary, inputClass } from "@/components/app/kit";
-import { Copy, Database, Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { ImportButton } from "@/components/app/import-button";
+import { BackupButtons } from "@/components/app/backup-buttons";
 import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE, joinPhone, splitPhone } from "@/lib/country-codes";
 
 export const Route = createFileRoute("/_authenticated/app/ajustes")({ component: Settings });
@@ -310,48 +309,19 @@ function BookingTab() {
 }
 
 function DataTab() {
-  const backup = useServerFn(createBackup);
-  const list = useServerFn(listBackups);
-  const { data, refetch } = useQuery({ queryKey: ["backups"], queryFn: () => list() });
-  const [busy, setBusy] = useState(false);
-
   return (
     <Panel className="p-6">
       <h2 className="font-serif text-lg">Copias de seguridad</h2>
       <p className="text-sm text-muted-foreground mt-1">
-        Descarga una copia completa de tus clientes, citas, servicios y pagos. Guárdala donde prefieras (por ejemplo, tu Google Drive).
+        Guarda o restaura en Excel clientes, citas, tratamientos, pagos, saldos, gastos, servicios, profesionales y configuración.
       </p>
-      <button
-        className={`${btnPrimary} mt-4`}
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          try {
-            const res = await backup();
-            downloadJson(res.payload, "eleva-backup");
-            refetch();
-            toast.success("Copia de seguridad descargada");
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Error");
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <Database className="h-4 w-4" /> {busy ? "Generando..." : "Crear copia ahora"}
-      </button>
-
-      <div className="mt-6 divide-y divide-border">
-        {(data ?? []).map((b) => (
-          <div key={b.id} className="py-3 flex items-center justify-between text-sm">
-            <span>{new Date(b.created_at).toLocaleString("es-ES")}</span>
-            <span className="text-muted-foreground">{Math.round((b.size_bytes ?? 0) / 1024)} KB</span>
-          </div>
-        ))}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <BackupButtons />
       </div>
+      <p className="mt-3 text-xs text-muted-foreground">Al importar, se combinan los datos y se evitan duplicados.</p>
 
       <div className="mt-8 border-t border-border pt-6">
-        <h2 className="font-serif text-lg">Importar datos (CSV o Excel)</h2>
+        <h2 className="font-serif text-lg">Importaciones rápidas</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Sube un archivo .csv o .xlsx para restaurar o cargar tus datos. La primera fila debe tener los títulos de las
           columnas (por ejemplo: nombre, telefono, whatsapp, email para clientes).
