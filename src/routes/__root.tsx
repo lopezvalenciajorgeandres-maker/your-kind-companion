@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -77,21 +78,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Eleva System — Elevamos tu marca, impulsamos tus resultados" },
+      {
+        name: "description",
+        content:
+          "Agencia de marketing digital especializada en spas, clínicas estéticas y salones de belleza. Más clientes, más reservas, más ventas — con una agenda gratuita incluida.",
+      },
+      { name: "author", content: "Eleva System" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Eleva System" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:title", content: "Eleva System — Elevamos tu marca, impulsamos tus resultados" },
+      { name: "twitter:title", content: "Eleva System — Elevamos tu marca, impulsamos tus resultados" },
+      { property: "og:description", content: "Agencia de marketing digital especializada en spas, clínicas estéticas y salones de belleza. Más clientes, más reservas, más ventas — con una agenda gratuita incluida." },
+      { name: "twitter:description", content: "Agencia de marketing digital especializada en spas, clínicas estéticas y salones de belleza. Más clientes, más reservas, más ventas — con una agenda gratuita incluida." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2ef13c8c-2f49-41cf-92f0-2d99157be9f9/id-preview-318a7a7a--028564a5-199f-4a8f-a038-b2fe3e41efaa.lovable.app-1785287998790.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2ef13c8c-2f49-41cf-92f0-2d99157be9f9/id-preview-318a7a7a--028564a5-199f-4a8f-a038-b2fe3e41efaa.lovable.app-1785287998790.png" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -102,7 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <HeadContent />
       </head>
@@ -119,8 +131,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );
 }

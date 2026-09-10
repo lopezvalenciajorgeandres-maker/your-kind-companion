@@ -1,4 +1,4 @@
-# Your Kind Companion
+# Embrace Everyday
 
 lovable
 
@@ -6,7 +6,7 @@ This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/60638476-13b1-48b0-bddb-ee63071d3f59).
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/734104c6-7f46-437f-ab4c-ac19fc12952d).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
