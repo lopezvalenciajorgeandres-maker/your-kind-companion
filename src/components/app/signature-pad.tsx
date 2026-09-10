@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal, btnGhost, btnPrimary, inputClass, Field } from "./kit";
-import { Eraser, PenLine } from "lucide-react";
+import { ChevronDown, ChevronUp, Eraser, PenLine, ShieldCheck } from "lucide-react";
+
+export const DATA_POLICY_TEXT = `Autorización para el Tratamiento de Datos Personales
+
+Con la aceptación de esta autorización y la firma del presente documento, el titular de los datos personales, de manera libre, previa, expresa e informada, autoriza al establecimiento para la recolección, almacenamiento, uso, circulación y supresión de sus datos personales, conforme a lo dispuesto en la Ley 1581 de 2012 y el Decreto 1377 de 2013 (Colombia).
+
+Finalidades del tratamiento:
+• Gestionar la agenda de citas, servicios y tratamientos contratados.
+• Llevar el historial clínico/estético, pagos, abonos y saldos pendientes.
+• Enviar recordatorios de citas, felicitaciones y mensajes relacionados con los servicios, a través de WhatsApp, llamadas o correo electrónico.
+• Elaborar reportes internos y cumplir obligaciones contables y legales.
+
+Derechos del titular:
+El titular podrá ejercer en cualquier momento sus derechos de conocer, actualizar, rectificar y suprimir sus datos, así como revocar esta autorización, mediante solicitud escrita dirigida al establecimiento, sin que ello afecte el uso de los datos previamente autorizado ni las obligaciones legales de conservación.
+
+El establecimiento garantiza la confidencialidad y seguridad de la información y no compartirá los datos con terceros ajenos a la prestación del servicio, salvo obligación legal.`;
 
 /**
  * Panel de firma. Funciona con dedo (tablet/celular), lápiz digital,
