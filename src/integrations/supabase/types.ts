@@ -19,6 +19,8 @@ export type Database = {
           business_id: string
           client_id: string
           created_at: string
+          data_consent: boolean | null
+          data_consent_at: string | null
           ends_at: string
           id: string
           notes: string | null
@@ -39,6 +41,8 @@ export type Database = {
           business_id: string
           client_id: string
           created_at?: string
+          data_consent?: boolean | null
+          data_consent_at?: string | null
           ends_at: string
           id?: string
           notes?: string | null
@@ -59,6 +63,8 @@ export type Database = {
           business_id?: string
           client_id?: string
           created_at?: string
+          data_consent?: boolean | null
+          data_consent_at?: string | null
           ends_at?: string
           id?: string
           notes?: string | null

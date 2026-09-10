@@ -119,6 +119,7 @@ export const completeAppointmentSession = createServerFn({ method: "POST" })
           .nullable()
           .optional(),
         signed_by_name: z.string().trim().max(120).nullable().optional(),
+        data_consent: z.boolean().optional(),
       })
       .parse(i),
   )
@@ -129,6 +130,8 @@ export const completeAppointmentSession = createServerFn({ method: "POST" })
       signature_data_url?: string | null;
       signed_at?: string | null;
       signed_by_name?: string | null;
+      data_consent?: boolean | null;
+      data_consent_at?: string | null;
     } = { status: data.completed ? "completed" : "scheduled" };
     if (data.completed) {
       if (data.signature_data_url) {
@@ -136,10 +139,16 @@ export const completeAppointmentSession = createServerFn({ method: "POST" })
         patch.signed_at = new Date().toISOString();
         patch.signed_by_name = data.signed_by_name ?? null;
       }
+      if (data.data_consent !== undefined) {
+        patch.data_consent = data.data_consent;
+        patch.data_consent_at = data.data_consent ? new Date().toISOString() : null;
+      }
     } else {
       patch.signature_data_url = null;
       patch.signed_at = null;
       patch.signed_by_name = null;
+      patch.data_consent = null;
+      patch.data_consent_at = null;
     }
     const { error } = await context.supabase
       .from("appointments")

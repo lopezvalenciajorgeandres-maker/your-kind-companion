@@ -1,0 +1,1 @@
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS data_consent boolean, ADD COLUMN IF NOT EXISTS data_consent_at timestamptz;

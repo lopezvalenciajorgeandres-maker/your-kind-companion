@@ -414,6 +414,7 @@ function Agenda() {
       completed: boolean;
       signature_data_url?: string | null;
       signed_by_name?: string | null;
+      data_consent?: boolean;
     }) => completeAppt({ data: v }),
     onSuccess: (_r, v) => {
       qc.invalidateQueries({ queryKey: ["appts"] });
@@ -1519,6 +1520,7 @@ function Agenda() {
               completed: true,
               signature_data_url: signature,
               signed_by_name: signedBy || null,
+              data_consent: true,
             });
             setSignAppt(null);
           }}
