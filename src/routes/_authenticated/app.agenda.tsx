@@ -374,14 +374,30 @@ function Agenda() {
   });
 
   const completeApptMut = useMutation({
-    mutationFn: (v: { id: string; completed: boolean }) => completeAppt({ data: v }),
+    mutationFn: (v: {
+      id: string;
+      completed: boolean;
+      signature_data_url?: string | null;
+      signed_by_name?: string | null;
+    }) => completeAppt({ data: v }),
     onSuccess: (_r, v) => {
       qc.invalidateQueries({ queryKey: ["appts"] });
       qc.invalidateQueries({ queryKey: ["treatments"] });
-      toast.success(v.completed ? "Sesión marcada como realizada" : "Sesión marcada como no realizada");
+      toast.success(
+        v.completed ? "Sesión confirmada con la firma del cliente" : "Sesión marcada como no realizada",
+      );
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo actualizar la sesión"),
   });
+
+  // Al chulear una sesión pedimos la firma del cliente; al deshacer, no.
+  function toggleSession(a: any) {
+    if (a.status === "completed") {
+      completeApptMut.mutate({ id: a.id, completed: false });
+      return;
+    }
+    setSignAppt(a);
+  }
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => {
