@@ -39,6 +39,8 @@ export function SignaturePad({
   const last = useRef<{ x: number; y: number } | null>(null);
   const [hasInk, setHasInk] = useState(false);
   const [name, setName] = useState(clientName ?? "");
+  const [accepted, setAccepted] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
