@@ -66,7 +66,7 @@ export const exportFullBackup = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
     const sb = context.supabase as any;
-    const names = ["businesses", "clients", "services", "professionals", "professional_services", "packages", "treatments", "appointments", "package_sessions", "payments", "expenses", "client_notes", "business_hours", "blocked_dates"] as const;
+    const names = ["businesses", "clients", "services", "professionals", "professional_services", "packages", "treatments", "appointments", "package_sessions", "payments", "expenses", "client_notes", "business_hours", "blocked_dates", "notifications"] as const;
     const responses = await Promise.all(names.map((table) => sb.from(table).select("*").eq(table === "businesses" ? "id" : "business_id", businessId)));
     for (const response of responses) if (response.error) throw new Error(response.error.message);
     const data = Object.fromEntries(names.map((name, i) => [name, responses[i]?.data ?? []])) as Record<string, any[]>;
