@@ -195,6 +195,23 @@ function Agenda() {
     return map;
   }, [receivables.data]);
 
+  // Número de sesión de cada cita dentro de su tratamiento (ordenadas por fecha).
+  const sessionNumberByAppt = useMemo(() => {
+    const map = new Map<string, number>();
+    const byTr = new Map<string, { id: string; starts_at: string }[]>();
+    for (const a of appts.data ?? []) {
+      if (!a.treatment_id || a.status === "cancelled") continue;
+      const arr = byTr.get(a.treatment_id) ?? [];
+      arr.push({ id: a.id, starts_at: a.starts_at });
+      byTr.set(a.treatment_id, arr);
+    }
+    for (const arr of byTr.values()) {
+      arr.sort((x, y) => x.starts_at.localeCompare(y.starts_at));
+      arr.forEach((a, i) => map.set(a.id, i + 1));
+    }
+    return map;
+  }, [appts.data]);
+
   const persistHours = useServerFn(saveHours);
   const hoursMut = useMutation({
     mutationFn: (hours: DayHours[]) =>
@@ -1087,28 +1104,25 @@ function Agenda() {
                   const isCompleted = a.status === "completed";
                   const hasPendingBalance = !!tr && tr.balance_cents > 0;
 
+                  // Sesión paga cuando su número dentro del tratamiento ya está cubierto por los abonos.
+                  const sessionNumber = sessionNumberByAppt.get(a.id) ?? null;
+                  const sessionPaid = !!tr && sessionNumber !== null && sessionNumber <= tr.sessions_paid;
+
                   let baseColor: string;
                   if (treatmentPaidAndClosed) {
                     baseColor = "#10B981"; // verde intenso: tratamiento finalizado y pagado
+                  } else if (sessionPaid) {
+                    baseColor = "#34D399"; // verde: sesión con abono
                   } else if (isCompleted) {
                     baseColor = "#8FB996";
                   } else if (treatmentPaidWithPendingSessions) {
                     baseColor = "#BAE6FD";
-                  } else if (sessionsDone) {
-                    baseColor = payProgressColor(payRatio, apptPaid > 0, trFullyPaid);
                   } else {
                     baseColor = color;
                   }
 
-                  // Mitad superior verde cuando la sesión ya fue realizada;
-                  // mitad inferior ámbar cuando aún hay saldo pendiente por pagar.
-                  const topColor = isCompleted ? "#10B981" : baseColor;
-                  const bottomColor = hasPendingBalance ? "#F59E0B" : baseColor;
-                  const splitCard = isCompleted || hasPendingBalance;
-                  const cardColor = splitCard
-                    ? `linear-gradient(180deg, ${topColor} 50%, ${bottomColor} 50%)`
-                    : baseColor;
-                  const textColor = splitCard ? "#1a1512" : readableText(baseColor);
+                  const cardColor = baseColor;
+                  const textColor = readableText(baseColor);
 
                   const dragging = drag?.id === a.id && drag.moved;
                   const previewTop = dragging ? ((drag!.minutes - HOURS[0] * 60) / 60) * SLOT_HEIGHT : top;
