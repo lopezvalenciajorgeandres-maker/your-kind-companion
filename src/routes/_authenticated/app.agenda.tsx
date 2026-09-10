@@ -1398,6 +1398,32 @@ function Agenda() {
         />
       )}
 
+      {signAppt && (
+        <SignaturePad
+          clientName={
+            [signAppt.client?.full_name, signAppt.client?.last_name].filter(Boolean).join(" ") || undefined
+          }
+          subtitle={`${signAppt.client?.full_name ?? "El cliente"} firma para confirmar que la cita del ${new Date(
+            signAppt.starts_at,
+          ).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })} se cumplió. Puede firmar con el dedo en celular o tablet, o con el touchpad en el computador.`}
+          onCancel={() => setSignAppt(null)}
+          onDone={(signature, signedBy) => {
+            completeApptMut.mutate({
+              id: signAppt.id,
+              completed: true,
+              signature_data_url: signature,
+              signed_by_name: signedBy || null,
+            });
+            setSignAppt(null);
+          }}
+        />
+      )}
+
       {editAppt && (
         <EditTimeModal
           appt={editAppt}
