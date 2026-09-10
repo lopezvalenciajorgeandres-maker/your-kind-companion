@@ -89,6 +89,13 @@ export const exportFullBackup = createServerFn({ method: "POST" })
       if (p.client_id) add(paid, p.client_id, p.amount_cents ?? 0);
       if (p.client_id && !p.treatment_id && !p.appointment_id) add(charged, p.client_id, p.total_cents ?? p.amount_cents ?? 0);
     }
+    const paidByTreatment = new Map<string, number>();
+    for (const p of payments) if (p.treatment_id) add(paidByTreatment, p.treatment_id, p.amount_cents ?? 0);
+    const clientById = new Map(clients.map((c) => [c.id, c]));
+    const contactOf = (id: string | null) => { const c = id ? clientById.get(id) : null; return c ? (c.whatsapp || c.phone || "") : ""; };
+    const treatmentBalance = (t: any) => Math.max((t.total_cents ?? 0) - (paidByTreatment.get(t.id) ?? 0), 0);
+    const pendingAppointments = appointments.filter((a) => a.status !== "completed" && a.status !== "cancelled");
+    const apptTreatmentClients = new Set(pendingAppointments.filter((a) => a.treatment_id).map((a) => a.client_id));
     const sheets: BackupSheets = {
       [SHEETS.control]: [{ version_respaldo: 2, generado_iso: new Date().toISOString(), negocio_id: businessId, descripcion: "Respaldo integral ELEVA" }, ...names.filter((n) => n !== "businesses").map((n) => ({ seccion: n, registros: data[n]?.length ?? 0 }))],
       [SHEETS.business]: business ? [{ id: business.id, nombre: business.name, tipo: business.business_type, descripcion: business.description ?? "", ciudad: business.city ?? "", pais: business.country ?? "", direccion: business.address ?? "", telefono: business.phone ?? "", whatsapp: business.whatsapp ?? "", instagram: business.instagram ?? "", sitio_web: business.website ?? "", logo_url: business.logo_url ?? "", zona_horaria: business.timezone, moneda: business.currency, reservas_activas: business.booking_enabled ? "si" : "no" }] : [],
