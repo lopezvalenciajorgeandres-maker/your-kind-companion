@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { createClient, deleteClient, listClients, updateClient } from "@/lib/clients.functions";
 import { useTenant } from "@/lib/use-tenant";
 import { CLIENT_SOURCES, limitReached } from "@/lib/plan";
-import { ClientForm } from "@/components/app/client-form";
+import { ClientForm, daysToBirthday } from "@/components/app/client-form";
 import { EmptyState, Modal, PageHeader, Panel, btnPrimary, inputClass } from "@/components/app/kit";
 import { WhatsAppMenu, birthdayMessage } from "@/components/app/whatsapp-menu";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -23,6 +23,8 @@ type Client = {
   birthdate: string | null;
   gender: string | null;
   address: string | null;
+  city: string | null;
+  state: string | null;
   source: string | null;
   notes: string | null;
 };
@@ -53,6 +55,21 @@ function Clients() {
   );
 
   const overLimit = limitReached(tenant.limits, "max_clients", rows.length);
+
+  const birthdays = useMemo(() => rows.filter((c) => daysToBirthday(c.birthdate) === 0), [rows]);
+
+  useEffect(() => {
+    if (birthdays.length === 0) return;
+    const key = `bday-alert-${new Date().toDateString()}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    toast.success(
+      birthdays.length === 1
+        ? `🎂 Hoy es el cumpleaños de ${birthdays[0]!.full_name}. ¡Envíale la felicitación!`
+        : `🎂 Hoy cumplen ${birthdays.length} clientes. ¡Envíales la felicitación!`,
+      { duration: 8000 },
+    );
+  }, [birthdays]);
 
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -87,6 +104,29 @@ function Clients() {
           </div>
         }
       />
+
+      {birthdays.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/10 p-4">
+          <p className="text-sm font-medium">🎂 Cumpleaños de hoy</p>
+          <div className="mt-3 space-y-2">
+            {birthdays.map((c) => (
+              <div key={c.id} className="flex items-center gap-3">
+                <span className="flex-1 min-w-0 truncate text-sm">
+                  {c.full_name} {c.last_name ?? ""}
+                </span>
+                <WhatsAppMenu
+                  phone={c.whatsapp || c.phone}
+                  label="Felicitar"
+                  message={birthdayMessage({
+                    clientName: c.full_name,
+                    businessName: tenant.business?.name ?? "nuestro centro",
+                  })}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">

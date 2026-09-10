@@ -4,6 +4,7 @@ import { CLIENT_SOURCES } from "@/lib/plan";
 import { Field, btnGhost, btnPrimary, inputClass } from "@/components/app/kit";
 import { WhatsAppMenu, birthdayMessage } from "@/components/app/whatsapp-menu";
 import { COUNTRY_CODES, joinPhone, splitPhone } from "@/lib/country-codes";
+import { COLOMBIA_DEPARTMENTS } from "@/lib/colombia";
 
 export type ClientPayload = {
   full_name: string;
@@ -14,6 +15,8 @@ export type ClientPayload = {
   birthdate: string | null;
   gender: string | null;
   address: string | null;
+  city: string | null;
+  state: string | null;
   source: string | null;
   notes: string | null;
 };
@@ -64,6 +67,8 @@ export function ClientForm({
     birthdate: client?.birthdate ?? "",
     gender: client?.gender ?? "",
     address: client?.address ?? "",
+    city: client?.city ?? "",
+    state: client?.state ?? "",
     source: client?.source ?? "",
     notes: client?.notes ?? "",
   });
@@ -139,6 +144,17 @@ export function ClientForm({
             <option value="">Sin especificar</option>
             {CLIENT_SOURCES.map((s) => <option key={s}>{s}</option>)}
           </select>
+        </Field>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field label="Departamento">
+          <select className={inputClass} value={form.state ?? ""} onChange={set("state")}>
+            <option value="">Sin especificar</option>
+            {COLOMBIA_DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
+          </select>
+        </Field>
+        <Field label="Municipio de residencia">
+          <input className={inputClass} value={form.city ?? ""} onChange={set("city")} placeholder="Ej. Cartago" />
         </Field>
       </div>
       <Field label="Dirección"><input className={inputClass} value={form.address ?? ""} onChange={set("address")} /></Field>
