@@ -1102,7 +1102,7 @@ function Agenda() {
                   const apptPaid = paidByAppt.get(a.id) ?? 0;
                   const trFullyPaid = !!tr && tr.total_cents > 0 && tr.paid_cents >= tr.total_cents;
                   const isCompleted = a.status === "completed";
-                  const hasPendingBalance = !!tr && tr.balance_cents > 0;
+                  const hasPendingBalance = !!tr && sessionNumber !== null && sessionNumber > tr.sessions_paid;
 
                   // Sesión paga cuando su número dentro del tratamiento ya está cubierto por los abonos.
                   const sessionNumber = sessionNumberByAppt.get(a.id) ?? null;
