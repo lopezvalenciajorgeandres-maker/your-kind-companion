@@ -1330,7 +1330,7 @@ function Agenda() {
                     )) ?? null;
               const trPending = tr ? Math.max(0, tr.sessions_total - tr.sessions_done) : 0;
               const debtRem = phone && tr && tr.balance_cents > 0
-                ? buildDebtReminder(phone, a, tr.balance_cents, tenant.currency)
+                ? buildDebtReminder(phone, (a as any).client?.full_name ?? "", (a as any).service?.name ?? "", tr.balance_cents, tenant.currency)
                 : null;
               return (
                 <div
