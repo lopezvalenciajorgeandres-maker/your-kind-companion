@@ -1309,13 +1309,14 @@ function Agenda() {
       <div className="mt-8">
         <h2 className="font-serif text-2xl">Recordatorios de WhatsApp</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Envía el recordatorio de cita a cada cliente por WhatsApp (Web, Escritorio o copiando el mensaje).
+          Envía el recordatorio de cita a cada cliente por WhatsApp (Web, Escritorio o copiando el mensaje). Solo aparecen citas pendientes.
         </p>
         <div className="mt-4 space-y-2">
           {(appts.data ?? []).length === 0 && (
             <p className="text-sm text-muted-foreground">No hay citas esta semana.</p>
           )}
           {[...(appts.data ?? [])]
+            .filter((a) => a.status !== "completed")
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
             .map((a) => {
               const phone = ((a as any).client?.whatsapp || (a as any).client?.phone) as string | undefined;
@@ -1352,29 +1353,6 @@ function Agenda() {
                             ? `Saldo ${formatMoney(tr.balance_cents, tenant.currency)}`
                             : "Todo pagado"}
                         </span>
-                        {a.status !== "cancelled" && (
-                          <button
-                            type="button"
-                            onClick={() => toggleSession(a)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
-                              a.status === "completed"
-                                ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                                : "border border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
-                            }`}
-                          >
-                            {a.status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
-                            {a.status === "completed" ? "Sesión realizada" : "Marcar sesión realizada"}
-                          </button>
-                        )}
-                        {tr.status === "open" && tr.balance_cents <= 0 && (
-                          <button
-                            type="button"
-                            onClick={() => closeTreatMut.mutate({ id: tr.id })}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Finalizar tratamiento
-                          </button>
-                        )}
                       </div>
                     )}
                   </div>
