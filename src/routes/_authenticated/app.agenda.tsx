@@ -1121,7 +1121,7 @@ function Agenda() {
                         top,
                         height,
                         background: cardColor,
-                        color: readableText(cardColor),
+                        color: textColor,
 
                         transform: dragging
                           ? `translate(${(drag!.dayIndex - di) * drag!.colWidth}px, ${previewTop - top}px)`
