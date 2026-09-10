@@ -221,7 +221,7 @@ export const importFullBackup = createServerFn({ method: "POST" })
       return (hit?.[1] as Row[]) ?? [];
     };
 
-    const summary = { clientes: 0, servicios: 0, profesionales: 0, citas: 0, pagos: 0, gastos: 0, notas: 0 };
+    const summary = { clientes: 0, servicios: 0, profesionales: 0, citas: 0, pagos: 0, gastos: 0, notas: 0, tratamientos: 0, horarios: 0 };
 
     // Clientes
     const existingClients = (await sb.from("clients").select("id, full_name, last_name").eq("business_id", businessId)).data ?? [];
