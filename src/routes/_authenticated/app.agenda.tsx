@@ -44,6 +44,8 @@ const SLOT_MIN = 15; // franjas de 15 minutos
 const SLOT_PX = 22; // px por franja de 15 min
 const SLOT_HEIGHT = SLOT_PX * (60 / SLOT_MIN); // px por hora
 const fmtSlot = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const fmtMoveLabel = (s: Date, e: Date) =>
+  `${s.toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short" })} ${fmtSlot(s.getHours() * 60 + s.getMinutes())}–${fmtSlot(e.getHours() * 60 + e.getMinutes())}`;
 
 type DayHours = {
   weekday: number;
