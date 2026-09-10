@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ClientForm, type ClientPayload } from "@/components/app/client-form";
 import { Modal } from "@/components/app/kit";
+import { SignaturePad } from "@/components/app/signature-pad";
 import { BackupButtons } from "@/components/app/backup-buttons";
 import { closeTreatment, createTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
 import { useTenant } from "@/lib/use-tenant";
