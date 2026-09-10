@@ -29,6 +29,7 @@ export type Database = {
           service_id: string | null
           starts_at: string
           status: string
+          treatment_id: string | null
           updated_at: string
         }
         Insert: {
@@ -45,6 +46,7 @@ export type Database = {
           service_id?: string | null
           starts_at: string
           status?: string
+          treatment_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -61,6 +63,7 @@ export type Database = {
           service_id?: string | null
           starts_at?: string
           status?: string
+          treatment_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -90,6 +93,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
             referencedColumns: ["id"]
           },
         ]
@@ -816,6 +826,7 @@ export type Database = {
           service_id: string | null
           status: string
           total_cents: number | null
+          treatment_id: string | null
           updated_at: string
         }
         Insert: {
@@ -832,6 +843,7 @@ export type Database = {
           service_id?: string | null
           status?: string
           total_cents?: number | null
+          treatment_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -848,6 +860,7 @@ export type Database = {
           service_id?: string | null
           status?: string
           total_cents?: number | null
+          treatment_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -877,6 +890,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
             referencedColumns: ["id"]
           },
         ]
@@ -1150,6 +1170,76 @@ export type Database = {
           },
         ]
       }
+      treatments: {
+        Row: {
+          business_id: string
+          client_id: string
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          service_id: string | null
+          sessions_total: number
+          status: string
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          service_id?: string | null
+          sessions_total?: number
+          status?: string
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          service_id?: string | null
+          sessions_total?: number
+          status?: string
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1183,6 +1273,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_professional: { Args: { _id: string }; Returns: boolean }
       is_business_admin: { Args: { _business_id: string }; Returns: boolean }
       is_member: { Args: { _business_id: string }; Returns: boolean }
     }
