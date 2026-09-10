@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listClients, createClient } from "@/lib/clients.functions";
 import { listServices } from "@/lib/services.functions";
 import { completeAppointmentSession, createAppointment, deleteAppointment, listAppointments, updateAppointment } from "@/lib/appointments.functions";
-import { AlertTriangle, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Link2, Lock, LockOpen, MessageCircle, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleCheckBig, Clock, Copy, Link2, Lock, LockOpen, MessageCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 import { createBlock, deleteBlock, listHours, openSlot, saveHours } from "@/lib/schedule.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,14 @@ const SLOT_HEIGHT = SLOT_PX * (60 / SLOT_MIN); // px por hora
 const fmtSlot = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const fmtMoveLabel = (s: Date, e: Date) =>
   `${s.toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short" })} ${fmtSlot(s.getHours() * 60 + s.getMinutes())}–${fmtSlot(e.getHours() * 60 + e.getMinutes())}`;
+
+function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      <path d="M12.04 2a9.84 9.84 0 0 0-8.48 14.8L2 22l5.34-1.5A9.99 9.99 0 1 0 12.04 2Zm0 17.98a8.05 8.05 0 0 1-4.1-1.12l-.3-.18-3.17.89.85-3.08-.2-.32a7.88 7.88 0 0 1-1.22-4.22 8.1 8.1 0 1 1 8.14 8.03Zm4.45-6.05c-.24-.12-1.44-.7-1.66-.79-.23-.08-.39-.12-.55.12-.16.25-.63.8-.77.96-.14.17-.28.19-.53.07-.24-.12-1.03-.38-1.96-1.2a7.4 7.4 0 0 1-1.35-1.67c-.14-.25-.01-.38.11-.5.11-.1.24-.28.36-.42.12-.14.16-.24.24-.4.08-.17.04-.31-.02-.43-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.43.06-.65.3-.22.25-.85.84-.85 2.04s.87 2.36 1 2.52c.12.17 1.72 2.63 4.16 3.69.58.25 1.03.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.44-.6 1.64-1.17.2-.58.2-1.08.14-1.18-.06-.1-.22-.17-.46-.29Z" />
+    </svg>
+  );
+}
 
 type DayHours = {
   weekday: number;
@@ -1230,7 +1238,7 @@ function Agenda() {
                             aria-label={a.status === "completed" ? "Sesión realizada (deshacer)" : "Marcar sesión como realizada"}
                             title={a.status === "completed" ? "Sesión realizada (deshacer)" : "Marcar sesión como realizada"}
                           >
-                            {a.status === "completed" ? <CheckCircle2 className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                            <CircleCheckBig className="h-[18px] w-[18px]" strokeWidth={2.4} />
                           </Button>
                         )}
                         {trReady && (
@@ -1256,11 +1264,11 @@ function Agenda() {
                           variant="secondary"
                           onClick={(e) => { e.stopPropagation(); setEditAppt(a); }}
                           onPointerDown={(e) => e.stopPropagation()}
-                          className="h-7 w-7 rounded-full shadow-md ring-2 ring-background"
+                          className="h-7 w-7 rounded-full bg-secondary text-secondary-foreground shadow-md ring-2 ring-background hover:bg-primary hover:text-primary-foreground"
                           aria-label="Editar horario de la cita"
                           title="Editar hora de inicio y fin"
                         >
-                          <Clock className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" strokeWidth={2.3} />
                         </Button>
                         <Button
                           type="button"
@@ -1273,11 +1281,11 @@ function Agenda() {
                             }
                             toast.error("Añade un teléfono al cliente para enviar el recordatorio");
                           }}
-                          className="h-7 w-7 rounded-full bg-accent text-accent-foreground shadow-md ring-2 ring-background hover:bg-accent/90"
+                          className="h-7 w-7 rounded-full bg-whatsapp text-whatsapp-foreground shadow-md ring-2 ring-background hover:bg-whatsapp/90"
                           aria-label={`Enviar recordatorio de ${(a as any).client?.full_name ?? "la cita"} por WhatsApp`}
                           title={waReminder ? "Enviar recordatorio por WhatsApp" : "El cliente no tiene teléfono registrado"}
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          <WhatsAppIcon className="h-[18px] w-[18px]" />
                         </Button>
                         <button
                           onClick={(e) => { e.stopPropagation(); deleteMut.mutate(a.id); }}
