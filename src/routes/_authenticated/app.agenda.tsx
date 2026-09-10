@@ -1109,7 +1109,7 @@ function Agenda() {
 
                   let baseColor: string;
                   if (treatmentPaidAndClosed) {
-                    baseColor = "#10B981"; // verde intenso: tratamiento finalizado y pagado
+                    baseColor = "#689B20"; // verde oliva intenso del branding: tratamiento finalizado y pagado
                   } else if (sessionPaid) {
                     baseColor = "#34D399"; // verde: sesión con abono
                   } else if (isCompleted) {
