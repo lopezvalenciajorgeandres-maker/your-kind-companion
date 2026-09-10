@@ -1140,8 +1140,13 @@ function Agenda() {
                       >
                         <div className="mx-auto mt-1 h-0.5 w-8 rounded-full bg-foreground/30 opacity-0 group-hover:opacity-100" />
                       </div>
-                      <div className="font-semibold truncate">{(a as any).client?.full_name}</div>
-                      <div className="opacity-80 line-clamp-2">{(a as any).service?.name ?? "Cita"}</div>
+                      <div className="font-semibold truncate flex items-center gap-1">
+                        <span className="truncate">{(a as any).client?.full_name}</span>
+                        {isCompleted && <CheckCircle2 className="h-3 w-3 shrink-0" />}
+                      </div>
+                      <div className="opacity-80 line-clamp-2">
+                        {isCompleted ? "✓ Realizada — " : ""}{(a as any).service?.name ?? "Cita"}
+                      </div>
                       {tr && (
                         <div className="mt-0.5 flex flex-wrap gap-1">
                           <span className="rounded bg-foreground/10 px-1 py-[1px] text-[10px] font-medium">
