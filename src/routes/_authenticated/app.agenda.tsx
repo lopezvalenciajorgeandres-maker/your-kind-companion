@@ -1085,15 +1085,28 @@ function Agenda() {
                   const apptPaid = paidByAppt.get(a.id) ?? 0;
                   const trFullyPaid = !!tr && tr.total_cents > 0 && tr.paid_cents >= tr.total_cents;
                   const isCompleted = a.status === "completed";
-                  const cardColor = isCompleted
-                    ? "#8FB996"
-                    : treatmentPaidWithPendingSessions
-                      ? "#BAE6FD"
-                      : treatmentPaidAndClosed
-                        ? "#D1FAE5"
-                        : sessionsDone
-                          ? payProgressColor(payRatio, apptPaid > 0, trFullyPaid)
-                          : color;
+                  const hasPendingBalance = !!tr && tr.balance_cents > 0;
+
+                  let baseColor: string;
+                  if (treatmentPaidAndClosed) {
+                    baseColor = "#10B981"; // verde intenso: tratamiento finalizado y pagado
+                  } else if (hasPendingBalance) {
+                    baseColor = "#F59E0B"; // ámbar base para saldo pendiente
+                  } else if (isCompleted) {
+                    baseColor = "#8FB996";
+                  } else if (treatmentPaidWithPendingSessions) {
+                    baseColor = "#BAE6FD";
+                  } else if (sessionsDone) {
+                    baseColor = payProgressColor(payRatio, apptPaid > 0, trFullyPaid);
+                  } else {
+                    baseColor = color;
+                  }
+
+                  const halfAmber = hasPendingBalance && !treatmentPaidAndClosed;
+                  const cardColor = halfAmber
+                    ? `linear-gradient(90deg, #F59E0B 50%, #FEF3C7 50%)`
+                    : baseColor;
+                  const textColor = halfAmber ? "#1a1512" : readableText(baseColor);
 
                   const dragging = drag?.id === a.id && drag.moved;
                   const previewTop = dragging ? ((drag!.minutes - HOURS[0] * 60) / 60) * SLOT_HEIGHT : top;
@@ -1108,7 +1121,7 @@ function Agenda() {
                         top,
                         height,
                         background: cardColor,
-                        color: readableText(cardColor),
+                        color: textColor,
 
                         transform: dragging
                           ? `translate(${(drag!.dayIndex - di) * drag!.colWidth}px, ${previewTop - top}px)`
