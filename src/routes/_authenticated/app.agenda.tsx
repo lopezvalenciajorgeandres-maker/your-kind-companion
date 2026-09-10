@@ -1316,6 +1316,7 @@ function Agenda() {
             <p className="text-sm text-muted-foreground">No hay citas esta semana.</p>
           )}
           {[...(appts.data ?? [])]
+            .filter((a) => a.status !== "completed")
             .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
             .map((a) => {
               const phone = ((a as any).client?.whatsapp || (a as any).client?.phone) as string | undefined;
