@@ -1406,7 +1406,7 @@ function Agenda() {
             );
             if (debtTreatments.length === 0) {
               return (
-                <p className="text-sm text-muted-foreground">No hay saldos pendientes de tratamientos finalizados.</p>
+                <p className="text-sm text-muted-foreground">No hay saldos pendientes por cobrar.</p>
               );
             }
             return debtTreatments.map((t) => {
