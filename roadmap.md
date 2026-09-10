@@ -7,4 +7,4 @@
   - [x] Activar inicio con Google
   - [x] Verificar compilación (tsgo sin errores)
 
-- [ ] Completar respaldo Excel y restauración sin duplicados
+- [x] Completar respaldo Excel y restauración sin duplicados
