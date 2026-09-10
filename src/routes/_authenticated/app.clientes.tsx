@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { createClient, deleteClient, listClients, updateClient } from "@/lib/clients.functions";
 import { useTenant } from "@/lib/use-tenant";
 import { CLIENT_SOURCES, limitReached } from "@/lib/plan";
-import { ClientForm } from "@/components/app/client-form";
+import { ClientForm, daysToBirthday } from "@/components/app/client-form";
 import { EmptyState, Modal, PageHeader, Panel, btnPrimary, inputClass } from "@/components/app/kit";
 import { WhatsAppMenu, birthdayMessage } from "@/components/app/whatsapp-menu";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -23,6 +23,8 @@ type Client = {
   birthdate: string | null;
   gender: string | null;
   address: string | null;
+  city: string | null;
+  state: string | null;
   source: string | null;
   notes: string | null;
 };
