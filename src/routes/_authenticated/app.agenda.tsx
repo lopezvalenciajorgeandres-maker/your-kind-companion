@@ -1084,13 +1084,16 @@ function Agenda() {
                   const payRatio = tr && tr.total_cents > 0 ? Math.min(1, tr.paid_cents / tr.total_cents) : 0;
                   const apptPaid = paidByAppt.get(a.id) ?? 0;
                   const trFullyPaid = !!tr && tr.total_cents > 0 && tr.paid_cents >= tr.total_cents;
-                  const cardColor = treatmentPaidWithPendingSessions
-                    ? "#BAE6FD"
-                    : treatmentPaidAndClosed
-                      ? "#D1FAE5"
-                      : sessionsDone
-                        ? payProgressColor(payRatio, apptPaid > 0, trFullyPaid)
-                        : color;
+                  const isCompleted = a.status === "completed";
+                  const cardColor = isCompleted
+                    ? "#8FB996"
+                    : treatmentPaidWithPendingSessions
+                      ? "#BAE6FD"
+                      : treatmentPaidAndClosed
+                        ? "#D1FAE5"
+                        : sessionsDone
+                          ? payProgressColor(payRatio, apptPaid > 0, trFullyPaid)
+                          : color;
 
                   const dragging = drag?.id === a.id && drag.moved;
                   const previewTop = dragging ? ((drag!.minutes - HOURS[0] * 60) / 60) * SLOT_HEIGHT : top;
@@ -1137,8 +1140,13 @@ function Agenda() {
                       >
                         <div className="mx-auto mt-1 h-0.5 w-8 rounded-full bg-foreground/30 opacity-0 group-hover:opacity-100" />
                       </div>
-                      <div className="font-semibold truncate">{(a as any).client?.full_name}</div>
-                      <div className="opacity-80 line-clamp-2">{(a as any).service?.name ?? "Cita"}</div>
+                      <div className="font-semibold truncate flex items-center gap-1">
+                        <span className="truncate">{(a as any).client?.full_name}</span>
+                        {isCompleted && <CheckCircle2 className="h-3 w-3 shrink-0" />}
+                      </div>
+                      <div className="opacity-80 line-clamp-2">
+                        {isCompleted ? "✓ Realizada — " : ""}{(a as any).service?.name ?? "Cita"}
+                      </div>
                       {tr && (
                         <div className="mt-0.5 flex flex-wrap gap-1">
                           <span className="rounded bg-foreground/10 px-1 py-[1px] text-[10px] font-medium">
