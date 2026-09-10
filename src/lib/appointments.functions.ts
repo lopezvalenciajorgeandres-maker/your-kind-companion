@@ -124,7 +124,12 @@ export const completeAppointmentSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
-    const patch: Record<string, unknown> = { status: data.completed ? "completed" : "scheduled" };
+    const patch: {
+      status: string;
+      signature_data_url?: string | null;
+      signed_at?: string | null;
+      signed_by_name?: string | null;
+    } = { status: data.completed ? "completed" : "scheduled" };
     if (data.completed) {
       if (data.signature_data_url) {
         patch.signature_data_url = data.signature_data_url;
