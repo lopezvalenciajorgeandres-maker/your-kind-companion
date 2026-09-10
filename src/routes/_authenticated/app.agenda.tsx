@@ -83,6 +83,7 @@ function Agenda() {
   const [modal, setModal] = useState(false);
   const [reminder, setReminder] = useState<WhatsAppReminder | null>(null);
   const [editAppt, setEditAppt] = useState<any | null>(null);
+  const [signAppt, setSignAppt] = useState<any | null>(null);
   const [confirmUnlockDay, setConfirmUnlockDay] = useState<Date | null>(null);
   const [confirmUnlockSlot, setConfirmUnlockSlot] = useState<{ d: Date; m: number } | null>(null);
   const [confirmOffHours, setConfirmOffHours] = useState<{ d: Date; m: number } | null>(null);
