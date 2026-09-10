@@ -10,33 +10,321 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as CasosExitoRouteImport } from './routes/casos-exito'
+import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as PreciosRouteImport } from './routes/precios'
+import { Route as ServiciosRouteImport } from './routes/servicios'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as BookingSlugRouteImport } from './routes/booking.$slug'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppAgendaRouteImport } from './routes/_authenticated/app.agenda'
+import { Route as AuthenticatedAppAjustesRouteImport } from './routes/_authenticated/app.ajustes'
+import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated/app.clientes'
+import { Route as AuthenticatedAppContabilidadRouteImport } from './routes/_authenticated/app.contabilidad'
+import { Route as AuthenticatedAppModoRouteImport } from './routes/_authenticated/app.modo'
+import { Route as AuthenticatedAppOnboardingRouteImport } from './routes/_authenticated/app.onboarding'
+import { Route as AuthenticatedAppPagosRouteImport } from './routes/_authenticated/app.pagos'
+import { Route as AuthenticatedAppPlanesRouteImport } from './routes/_authenticated/app.planes'
+import { Route as AuthenticatedAppProfesionalesRouteImport } from './routes/_authenticated/app.profesionales'
+import { Route as AuthenticatedAppReportesRouteImport } from './routes/_authenticated/app.reportes'
+import { Route as AuthenticatedAppServiciosRouteImport } from './routes/_authenticated/app.servicios'
+import { Route as AuthenticatedAppClientesIdRouteImport } from './routes/_authenticated/app.clientes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CasosExitoRoute = CasosExitoRouteImport.update({
+  id: '/casos-exito',
+  path: '/casos-exito',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactoRoute = ContactoRouteImport.update({
+  id: '/contacto',
+  path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreciosRoute = PreciosRouteImport.update({
+  id: '/precios',
+  path: '/precios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiciosRoute = ServiciosRouteImport.update({
+  id: '/servicios',
+  path: '/servicios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
+const BookingSlugRoute = BookingSlugRouteImport.update({
+  id: '/booking/$slug',
+  path: '/booking/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppAgendaRoute = AuthenticatedAppAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppAjustesRoute = AuthenticatedAppAjustesRouteImport.update({
+  id: '/ajustes',
+  path: '/ajustes',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppClientesRoute =
+  AuthenticatedAppClientesRouteImport.update({
+    id: '/clientes',
+    path: '/clientes',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppContabilidadRoute =
+  AuthenticatedAppContabilidadRouteImport.update({
+    id: '/contabilidad',
+    path: '/contabilidad',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppModoRoute = AuthenticatedAppModoRouteImport.update({
+  id: '/modo',
+  path: '/modo',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppOnboardingRoute =
+  AuthenticatedAppOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPagosRoute = AuthenticatedAppPagosRouteImport.update({
+  id: '/pagos',
+  path: '/pagos',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppPlanesRoute = AuthenticatedAppPlanesRouteImport.update({
+  id: '/planes',
+  path: '/planes',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppProfesionalesRoute =
+  AuthenticatedAppProfesionalesRouteImport.update({
+    id: '/profesionales',
+    path: '/profesionales',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppReportesRoute =
+  AuthenticatedAppReportesRouteImport.update({
+    id: '/reportes',
+    path: '/reportes',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppServiciosRoute =
+  AuthenticatedAppServiciosRouteImport.update({
+    id: '/servicios',
+    path: '/servicios',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppClientesIdRoute =
+  AuthenticatedAppClientesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAppClientesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/casos-exito': typeof CasosExitoRoute
+  '/contacto': typeof ContactoRoute
+  '/precios': typeof PreciosRoute
+  '/servicios': typeof ServiciosRoute
+  '/app': typeof AuthenticatedAppRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
+  '/booking/$slug': typeof BookingSlugRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/ajustes': typeof AuthenticatedAppAjustesRoute
+  '/app/clientes': typeof AuthenticatedAppClientesRouteWithChildren
+  '/app/contabilidad': typeof AuthenticatedAppContabilidadRoute
+  '/app/modo': typeof AuthenticatedAppModoRoute
+  '/app/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/app/pagos': typeof AuthenticatedAppPagosRoute
+  '/app/planes': typeof AuthenticatedAppPlanesRoute
+  '/app/profesionales': typeof AuthenticatedAppProfesionalesRoute
+  '/app/reportes': typeof AuthenticatedAppReportesRoute
+  '/app/servicios': typeof AuthenticatedAppServiciosRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/clientes/$id': typeof AuthenticatedAppClientesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/casos-exito': typeof CasosExitoRoute
+  '/contacto': typeof ContactoRoute
+  '/precios': typeof PreciosRoute
+  '/servicios': typeof ServiciosRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/booking/$slug': typeof BookingSlugRoute
+  '/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/app/ajustes': typeof AuthenticatedAppAjustesRoute
+  '/app/clientes': typeof AuthenticatedAppClientesRouteWithChildren
+  '/app/contabilidad': typeof AuthenticatedAppContabilidadRoute
+  '/app/modo': typeof AuthenticatedAppModoRoute
+  '/app/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/app/pagos': typeof AuthenticatedAppPagosRoute
+  '/app/planes': typeof AuthenticatedAppPlanesRoute
+  '/app/profesionales': typeof AuthenticatedAppProfesionalesRoute
+  '/app/reportes': typeof AuthenticatedAppReportesRoute
+  '/app/servicios': typeof AuthenticatedAppServiciosRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/app/clientes/$id': typeof AuthenticatedAppClientesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
+  '/casos-exito': typeof CasosExitoRoute
+  '/contacto': typeof ContactoRoute
+  '/precios': typeof PreciosRoute
+  '/servicios': typeof ServiciosRoute
+  '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
+  '/booking/$slug': typeof BookingSlugRoute
+  '/_authenticated/app/agenda': typeof AuthenticatedAppAgendaRoute
+  '/_authenticated/app/ajustes': typeof AuthenticatedAppAjustesRoute
+  '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRouteWithChildren
+  '/_authenticated/app/contabilidad': typeof AuthenticatedAppContabilidadRoute
+  '/_authenticated/app/modo': typeof AuthenticatedAppModoRoute
+  '/_authenticated/app/onboarding': typeof AuthenticatedAppOnboardingRoute
+  '/_authenticated/app/pagos': typeof AuthenticatedAppPagosRoute
+  '/_authenticated/app/planes': typeof AuthenticatedAppPlanesRoute
+  '/_authenticated/app/profesionales': typeof AuthenticatedAppProfesionalesRoute
+  '/_authenticated/app/reportes': typeof AuthenticatedAppReportesRoute
+  '/_authenticated/app/servicios': typeof AuthenticatedAppServiciosRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/clientes/$id': typeof AuthenticatedAppClientesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/blog'
+    | '/casos-exito'
+    | '/contacto'
+    | '/precios'
+    | '/servicios'
+    | '/app'
+    | '/blog/$slug'
+    | '/booking/$slug'
+    | '/app/agenda'
+    | '/app/ajustes'
+    | '/app/clientes'
+    | '/app/contabilidad'
+    | '/app/modo'
+    | '/app/onboarding'
+    | '/app/pagos'
+    | '/app/planes'
+    | '/app/profesionales'
+    | '/app/reportes'
+    | '/app/servicios'
+    | '/app/'
+    | '/app/clientes/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/blog'
+    | '/casos-exito'
+    | '/contacto'
+    | '/precios'
+    | '/servicios'
+    | '/blog/$slug'
+    | '/booking/$slug'
+    | '/app/agenda'
+    | '/app/ajustes'
+    | '/app/clientes'
+    | '/app/contabilidad'
+    | '/app/modo'
+    | '/app/onboarding'
+    | '/app/pagos'
+    | '/app/planes'
+    | '/app/profesionales'
+    | '/app/reportes'
+    | '/app/servicios'
+    | '/app'
+    | '/app/clientes/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/blog'
+    | '/casos-exito'
+    | '/contacto'
+    | '/precios'
+    | '/servicios'
+    | '/_authenticated/app'
+    | '/blog/$slug'
+    | '/booking/$slug'
+    | '/_authenticated/app/agenda'
+    | '/_authenticated/app/ajustes'
+    | '/_authenticated/app/clientes'
+    | '/_authenticated/app/contabilidad'
+    | '/_authenticated/app/modo'
+    | '/_authenticated/app/onboarding'
+    | '/_authenticated/app/pagos'
+    | '/_authenticated/app/planes'
+    | '/_authenticated/app/profesionales'
+    | '/_authenticated/app/reportes'
+    | '/_authenticated/app/servicios'
+    | '/_authenticated/app/'
+    | '/_authenticated/app/clientes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
+  CasosExitoRoute: typeof CasosExitoRoute
+  ContactoRoute: typeof ContactoRoute
+  PreciosRoute: typeof PreciosRoute
+  ServiciosRoute: typeof ServiciosRoute
+  BookingSlugRoute: typeof BookingSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +336,248 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/casos-exito': {
+      id: '/casos-exito'
+      path: '/casos-exito'
+      fullPath: '/casos-exito'
+      preLoaderRoute: typeof CasosExitoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacto': {
+      id: '/contacto'
+      path: '/contacto'
+      fullPath: '/contacto'
+      preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/precios': {
+      id: '/precios'
+      path: '/precios'
+      fullPath: '/precios'
+      preLoaderRoute: typeof PreciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/servicios': {
+      id: '/servicios'
+      path: '/servicios'
+      fullPath: '/servicios'
+      preLoaderRoute: typeof ServiciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/booking/$slug': {
+      id: '/booking/$slug'
+      path: '/booking/$slug'
+      fullPath: '/booking/$slug'
+      preLoaderRoute: typeof BookingSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/agenda': {
+      id: '/_authenticated/app/agenda'
+      path: '/agenda'
+      fullPath: '/app/agenda'
+      preLoaderRoute: typeof AuthenticatedAppAgendaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/ajustes': {
+      id: '/_authenticated/app/ajustes'
+      path: '/ajustes'
+      fullPath: '/app/ajustes'
+      preLoaderRoute: typeof AuthenticatedAppAjustesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/clientes': {
+      id: '/_authenticated/app/clientes'
+      path: '/clientes'
+      fullPath: '/app/clientes'
+      preLoaderRoute: typeof AuthenticatedAppClientesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/contabilidad': {
+      id: '/_authenticated/app/contabilidad'
+      path: '/contabilidad'
+      fullPath: '/app/contabilidad'
+      preLoaderRoute: typeof AuthenticatedAppContabilidadRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/modo': {
+      id: '/_authenticated/app/modo'
+      path: '/modo'
+      fullPath: '/app/modo'
+      preLoaderRoute: typeof AuthenticatedAppModoRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/onboarding': {
+      id: '/_authenticated/app/onboarding'
+      path: '/onboarding'
+      fullPath: '/app/onboarding'
+      preLoaderRoute: typeof AuthenticatedAppOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/pagos': {
+      id: '/_authenticated/app/pagos'
+      path: '/pagos'
+      fullPath: '/app/pagos'
+      preLoaderRoute: typeof AuthenticatedAppPagosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/planes': {
+      id: '/_authenticated/app/planes'
+      path: '/planes'
+      fullPath: '/app/planes'
+      preLoaderRoute: typeof AuthenticatedAppPlanesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/profesionales': {
+      id: '/_authenticated/app/profesionales'
+      path: '/profesionales'
+      fullPath: '/app/profesionales'
+      preLoaderRoute: typeof AuthenticatedAppProfesionalesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/reportes': {
+      id: '/_authenticated/app/reportes'
+      path: '/reportes'
+      fullPath: '/app/reportes'
+      preLoaderRoute: typeof AuthenticatedAppReportesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/servicios': {
+      id: '/_authenticated/app/servicios'
+      path: '/servicios'
+      fullPath: '/app/servicios'
+      preLoaderRoute: typeof AuthenticatedAppServiciosRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/clientes/$id': {
+      id: '/_authenticated/app/clientes/$id'
+      path: '/$id'
+      fullPath: '/app/clientes/$id'
+      preLoaderRoute: typeof AuthenticatedAppClientesIdRouteImport
+      parentRoute: typeof AuthenticatedAppClientesRoute
+    }
   }
 }
 
+interface AuthenticatedAppClientesRouteChildren {
+  AuthenticatedAppClientesIdRoute: typeof AuthenticatedAppClientesIdRoute
+}
+
+const AuthenticatedAppClientesRouteChildren: AuthenticatedAppClientesRouteChildren =
+  {
+    AuthenticatedAppClientesIdRoute: AuthenticatedAppClientesIdRoute,
+  }
+
+const AuthenticatedAppClientesRouteWithChildren =
+  AuthenticatedAppClientesRoute._addFileChildren(
+    AuthenticatedAppClientesRouteChildren,
+  )
+
+interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAgendaRoute: typeof AuthenticatedAppAgendaRoute
+  AuthenticatedAppAjustesRoute: typeof AuthenticatedAppAjustesRoute
+  AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRouteWithChildren
+  AuthenticatedAppContabilidadRoute: typeof AuthenticatedAppContabilidadRoute
+  AuthenticatedAppModoRoute: typeof AuthenticatedAppModoRoute
+  AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
+  AuthenticatedAppPagosRoute: typeof AuthenticatedAppPagosRoute
+  AuthenticatedAppPlanesRoute: typeof AuthenticatedAppPlanesRoute
+  AuthenticatedAppProfesionalesRoute: typeof AuthenticatedAppProfesionalesRoute
+  AuthenticatedAppReportesRoute: typeof AuthenticatedAppReportesRoute
+  AuthenticatedAppServiciosRoute: typeof AuthenticatedAppServiciosRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+}
+
+const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAgendaRoute: AuthenticatedAppAgendaRoute,
+  AuthenticatedAppAjustesRoute: AuthenticatedAppAjustesRoute,
+  AuthenticatedAppClientesRoute: AuthenticatedAppClientesRouteWithChildren,
+  AuthenticatedAppContabilidadRoute: AuthenticatedAppContabilidadRoute,
+  AuthenticatedAppModoRoute: AuthenticatedAppModoRoute,
+  AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
+  AuthenticatedAppPagosRoute: AuthenticatedAppPagosRoute,
+  AuthenticatedAppPlanesRoute: AuthenticatedAppPlanesRoute,
+  AuthenticatedAppProfesionalesRoute: AuthenticatedAppProfesionalesRoute,
+  AuthenticatedAppReportesRoute: AuthenticatedAppReportesRoute,
+  AuthenticatedAppServiciosRoute: AuthenticatedAppServiciosRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+}
+
+const AuthenticatedAppRouteWithChildren =
+  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
+  CasosExitoRoute: CasosExitoRoute,
+  ContactoRoute: ContactoRoute,
+  PreciosRoute: PreciosRoute,
+  ServiciosRoute: ServiciosRoute,
+  BookingSlugRoute: BookingSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
