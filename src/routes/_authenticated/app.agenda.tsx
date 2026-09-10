@@ -535,10 +535,14 @@ function Agenda() {
       const oldStart = new Date(appt.starts_at);
       const duration = new Date(appt.ends_at).getTime() - oldStart.getTime();
       if (target.getTime() === oldStart.getTime()) return;
-      moveMut.mutate({
+      const newEnd = new Date(target.getTime() + duration);
+      setPendingMove({
         id: cur.id,
+        clientName: appt.clients?.name ?? "la cita",
+        fromLabel: fmtMoveLabel(oldStart, new Date(appt.ends_at)),
+        toLabel: fmtMoveLabel(target, newEnd),
         starts_at: target.toISOString(),
-        ends_at: new Date(target.getTime() + duration).toISOString(),
+        ends_at: newEnd.toISOString(),
       });
     };
     window.addEventListener("pointermove", onMove);
