@@ -1365,13 +1365,6 @@ function Agenda() {
 
                   {rem ? (
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditAppt(a)}
-                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
-                      >
-                        <Clock className="h-4 w-4" /> Editar horario
-                      </button>
                       {debtRem && (
                         <button
                           type="button"
