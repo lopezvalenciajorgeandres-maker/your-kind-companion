@@ -1309,11 +1309,14 @@ function Agenda() {
       <div className="mt-8">
         <h2 className="font-serif text-2xl">Recordatorios de WhatsApp</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Envía el recordatorio de la cita o un mensaje sutil sobre el saldo pendiente. Solo aparecen citas pendientes.
+          Envía recordatorios de cita o mensajes sutiles sobre saldos pendientes.
         </p>
-        <div className="mt-4 space-y-2">
-          {(appts.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">No hay citas esta semana.</p>
+
+        {/* Citas pendientes */}
+        <div className="mt-6 space-y-2">
+          <h3 className="text-sm font-medium text-muted-foreground">Citas pendientes</h3>
+          {(appts.data ?? []).filter((a) => a.status !== "completed").length === 0 && (
+            <p className="text-sm text-muted-foreground">No hay citas pendientes esta semana.</p>
           )}
           {[...(appts.data ?? [])]
             .filter((a) => a.status !== "completed")
@@ -1330,7 +1333,7 @@ function Agenda() {
                     )) ?? null;
               const trPending = tr ? Math.max(0, tr.sessions_total - tr.sessions_done) : 0;
               const debtRem = phone && tr && tr.balance_cents > 0
-                ? buildDebtReminder(phone, a, tr.balance_cents, tenant.currency)
+                ? buildDebtReminder(phone, (a as any).client?.full_name ?? "", (a as any).service?.name ?? "", tr.balance_cents, tenant.currency)
                 : null;
               return (
                 <div
@@ -1401,6 +1404,60 @@ function Agenda() {
                 </div>
               );
             })}
+        </div>
+
+        {/* Saldos pendientes de tratamientos finalizados */}
+        <div className="mt-6 space-y-2">
+          <h3 className="text-sm font-medium text-muted-foreground">Saldos pendientes de tratamientos finalizados</h3>
+          {(() => {
+            const pendingClientIds = new Set(
+              (appts.data ?? [])
+                .filter((a) => a.status !== "completed")
+                .map((a) => (a as any).client_id),
+            );
+            const debtTreatments = (treatments.data ?? []).filter(
+              (t) => t.status === "closed" && t.balance_cents > 0 && !pendingClientIds.has(t.client_id),
+            );
+            if (debtTreatments.length === 0) {
+              return (
+                <p className="text-sm text-muted-foreground">No hay saldos pendientes de tratamientos finalizados.</p>
+              );
+            }
+            return debtTreatments.map((t) => {
+              const client = (clients.data ?? []).find((c) => c.id === t.client_id);
+              const phone = (client?.whatsapp || client?.phone) as string | undefined;
+              const rem = phone
+                ? buildDebtReminder(phone, t.client_name, t.service_name, t.balance_cents, tenant.currency)
+                : null;
+              return (
+                <div
+                  key={t.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{t.client_name}</div>
+                    <div className="text-xs text-muted-foreground">{t.service_name}</div>
+                    <div className="mt-1 text-xs">
+                      <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-semibold text-amber-600">
+                        Saldo {formatMoney(t.balance_cents, tenant.currency)}
+                      </span>
+                    </div>
+                  </div>
+                  {rem ? (
+                    <button
+                      type="button"
+                      onClick={() => setReminder(rem)}
+                      className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                    >
+                      <MessageCircle className="h-4 w-4" /> Recordar saldo
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sin teléfono registrado</span>
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
       </div>
 
@@ -2068,11 +2125,17 @@ function buildWhatsAppReminder(phone: string, a: any): WhatsAppReminder | null {
   };
 }
 
-function buildDebtReminder(phone: string, a: any, balanceCents: number, currency: string): WhatsAppReminder | null {
+function buildDebtReminder(
+  phone: string,
+  clientName: string,
+  serviceName: string,
+  balanceCents: number,
+  currency: string,
+): WhatsAppReminder | null {
   const num = normalizePhone(phone);
   if (!num) return null;
-  const nombre = a.client?.full_name ?? "";
-  const servicio = a.service?.name ? `tu ${a.service.name}` : "tu servicio";
+  const nombre = clientName ?? "";
+  const servicio = serviceName ? `tu ${serviceName}` : "tu servicio";
   const monto = formatMoney(balanceCents, currency);
   const msg =
     `Hola ${nombre} 💜, esperamos que estés muy bien. ` +
