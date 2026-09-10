@@ -485,7 +485,15 @@ function Agenda() {
       starts.setHours(Math.floor(cur.startMin / 60), cur.startMin % 60, 0, 0);
       const ends = new Date(base);
       ends.setHours(Math.floor(cur.endMin / 60), cur.endMin % 60, 0, 0);
-      moveMut.mutate({ id: cur.id, starts_at: starts.toISOString(), ends_at: ends.toISOString() });
+      if (starts.getTime() === base.getTime() && ends.getTime() === new Date(appt.ends_at).getTime()) return;
+      setPendingMove({
+        id: cur.id,
+        clientName: appt.clients?.name ?? "la cita",
+        fromLabel: fmtMoveLabel(new Date(appt.starts_at), new Date(appt.ends_at)),
+        toLabel: fmtMoveLabel(starts, ends),
+        starts_at: starts.toISOString(),
+        ends_at: ends.toISOString(),
+      });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
