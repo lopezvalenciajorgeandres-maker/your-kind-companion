@@ -97,6 +97,14 @@ function Agenda() {
     minutes: number;
     moved: boolean;
   } | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    id: string;
+    clientName: string;
+    fromLabel: string;
+    toLabel: string;
+    starts_at: string;
+    ends_at: string;
+  } | null>(null);
   const [resize, setResize] = useState<{
     id: string;
     edge: "top" | "bottom";
