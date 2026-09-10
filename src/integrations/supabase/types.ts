@@ -27,6 +27,9 @@ export type Database = {
           price_cents: number | null
           professional_id: string | null
           service_id: string | null
+          signature_data_url: string | null
+          signed_at: string | null
+          signed_by_name: string | null
           starts_at: string
           status: string
           treatment_id: string | null
@@ -44,6 +47,9 @@ export type Database = {
           price_cents?: number | null
           professional_id?: string | null
           service_id?: string | null
+          signature_data_url?: string | null
+          signed_at?: string | null
+          signed_by_name?: string | null
           starts_at: string
           status?: string
           treatment_id?: string | null
@@ -61,6 +67,9 @@ export type Database = {
           price_cents?: number | null
           professional_id?: string | null
           service_id?: string | null
+          signature_data_url?: string | null
+          signed_at?: string | null
+          signed_by_name?: string | null
           starts_at?: string
           status?: string
           treatment_id?: string | null
