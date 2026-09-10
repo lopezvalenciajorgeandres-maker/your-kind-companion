@@ -1645,6 +1645,52 @@ function Agenda() {
           </div>
         </Modal>
       )}
+
+      {pendingMove && (
+        <Modal title="Cambiar horario de la cita" onClose={() => setPendingMove(null)}>
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <p className="text-base text-foreground">
+              ¿Deseas cambiar el horario de la cita de{" "}
+              <span className="font-semibold">{pendingMove.clientName}</span>?
+            </p>
+            <div className="mt-4 space-y-1 text-sm">
+              <p className="text-muted-foreground">
+                Antes: <span className="font-medium text-foreground">{pendingMove.fromLabel}</span>
+              </p>
+              <p className="text-muted-foreground">
+                Ahora: <span className="font-semibold text-primary">{pendingMove.toLabel}</span>
+              </p>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Esta alerta evita que la cita se mueva por error al deslizar las tarjetas.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPendingMove(null)}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  moveMut.mutate({ id: pendingMove.id, starts_at: pendingMove.starts_at, ends_at: pendingMove.ends_at });
+                  setPendingMove(null);
+                }}
+                disabled={moveMut.isPending}
+                className="w-full sm:w-auto"
+              >
+                {moveMut.isPending ? "Cambiando…" : "Sí, cambiar horario"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
