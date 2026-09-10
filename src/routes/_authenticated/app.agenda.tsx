@@ -1090,8 +1090,6 @@ function Agenda() {
                   let baseColor: string;
                   if (treatmentPaidAndClosed) {
                     baseColor = "#10B981"; // verde intenso: tratamiento finalizado y pagado
-                  } else if (hasPendingBalance) {
-                    baseColor = "#F59E0B"; // ámbar base para saldo pendiente
                   } else if (isCompleted) {
                     baseColor = "#8FB996";
                   } else if (treatmentPaidWithPendingSessions) {
@@ -1102,11 +1100,15 @@ function Agenda() {
                     baseColor = color;
                   }
 
-                  const halfAmber = hasPendingBalance && !treatmentPaidAndClosed;
-                  const cardColor = halfAmber
-                    ? `linear-gradient(90deg, #F59E0B 50%, #FEF3C7 50%)`
+                  // Mitad superior verde cuando la sesión ya fue realizada;
+                  // mitad inferior ámbar cuando aún hay saldo pendiente por pagar.
+                  const topColor = isCompleted ? "#10B981" : baseColor;
+                  const bottomColor = hasPendingBalance ? "#F59E0B" : baseColor;
+                  const splitCard = isCompleted || hasPendingBalance;
+                  const cardColor = splitCard
+                    ? `linear-gradient(180deg, ${topColor} 50%, ${bottomColor} 50%)`
                     : baseColor;
-                  const textColor = halfAmber ? "#1a1512" : readableText(baseColor);
+                  const textColor = splitCard ? "#1a1512" : readableText(baseColor);
 
                   const dragging = drag?.id === a.id && drag.moved;
                   const previewTop = dragging ? ((drag!.minutes - HOURS[0] * 60) / 60) * SLOT_HEIGHT : top;
