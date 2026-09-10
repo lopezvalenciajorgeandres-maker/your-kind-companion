@@ -34,6 +34,19 @@ const iso = (v: string) => {
 };
 const nameKey = (a: string, b?: string | null) => norm([a, b ?? ""].join(" "));
 const result = (): Count => ({ added: 0, updated: 0, skipped: 0 });
+const clientMatch = (row: Row, existing: any[]) => {
+  const email = norm(pick(row, ["email", "correo"]));
+  const phone = norm(pick(row, ["whatsapp", "telefono", "phone"]));
+  const birthdate = iso(pick(row, ["nacimiento", "birthdate"]))?.slice(0, 10) ?? "";
+  const byContact = existing.find((x) =>
+    (email && norm(x.email ?? "") === email) ||
+    (phone && [x.whatsapp, x.phone].some((value) => norm(value ?? "") === phone)),
+  );
+  if (byContact) return byContact;
+  const sameName = existing.filter((x) => nameKey(x.full_name, x.last_name) === nameKey(pick(row, ["nombre", "full_name"]), pick(row, ["apellido", "last_name"])));
+  if (birthdate) return sameName.find((x) => x.birthdate === birthdate);
+  return sameName.length === 1 ? sameName[0] : undefined;
+};
 
 export const exportFullBackup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -148,12 +161,22 @@ export const importFullBackup = createServerFn({ method: "POST" })
     await merge("clients", get(SHEETS.clients), "clientes", (r) => {
       const full_name = pick(r, ["nombre", "full_name", "cliente"]); if (!full_name) return null;
       return { owner_id: context.userId, full_name, last_name: pick(r, ["apellido", "last_name"]) || null, phone: pick(r, ["telefono", "phone"]) || null, whatsapp: pick(r, ["whatsapp"]) || null, email: pick(r, ["email", "correo"]) || null, birthdate: iso(pick(r, ["nacimiento", "birthdate"]))?.slice(0, 10) ?? null, gender: pick(r, ["genero", "gender"]) || null, address: pick(r, ["direccion", "address"]) || null, city: pick(r, ["municipio", "city"]) || null, state: pick(r, ["departamento", "state"]) || null, source: pick(r, ["origen", "source"]) || null, notes: pick(r, ["notas", "notes"]) || null, service_price_cents: pick(r, ["precio_servicio_centavos"]) ? Math.round(num(pick(r, ["precio_servicio_centavos"]))) : null };
-    }, (r, xs) => xs.find((x) => nameKey(x.full_name, x.last_name) === nameKey(pick(r, ["nombre", "full_name"]), pick(r, ["apellido", "last_name"]))), clientMap);
+    }, clientMatch, clientMap);
     await merge("services", get(SHEETS.services), "servicios", (r) => { const name = pick(r, ["nombre", "name", "servicio"]); if (!name) return null; return { owner_id: context.userId, name, category: pick(r, ["categoria", "category"]) || null, description: pick(r, ["descripcion", "description"]) || null, duration_min: Math.max(1, Math.round(num(pick(r, ["duracion_min", "duracion"]))) || 60), price_cents: cents(r, ["precio_centavos", "price_cents"], ["precio", "price", "valor"]), color: pick(r, ["color"]) || undefined, active: yes(pick(r, ["activo", "active"]), true) }; }, (r, xs) => xs.find((x) => norm(x.name) === norm(pick(r, ["nombre", "name", "servicio"]))), serviceMap);
     await merge("professionals", get(SHEETS.professionals), "profesionales", (r) => { const full_name = pick(r, ["nombre", "full_name", "profesional"]); if (!full_name) return null; return { full_name, specialty: pick(r, ["especialidad", "specialty"]) || null, phone: pick(r, ["telefono", "phone"]) || null, email: pick(r, ["email", "correo"]) || null, photo_url: pick(r, ["foto_url", "photo_url"]) || null, color: pick(r, ["color"]) || undefined, active: yes(pick(r, ["activo", "active"]), true) }; }, (r, xs) => xs.find((x) => norm(x.full_name) === norm(pick(r, ["nombre", "full_name", "profesional"]))), proMap);
     const clientsNow = (await sb.from("clients").select("*").eq("business_id", businessId)).data ?? [];
     const servicesNow = (await sb.from("services").select("*").eq("business_id", businessId)).data ?? [];
     const prosNow = (await sb.from("professionals").select("*").eq("business_id", businessId)).data ?? [];
+    for (const r of get(SHEETS.clients)) {
+      const client = clientMatch(r, clientsNow);
+      const service_id = resolve(r, ["servicio_id"], [], serviceMap, servicesNow, (x) => x.name);
+      if (client && service_id) await sb.from("clients").update({ service_id }).eq("id", client.id).eq("business_id", businessId);
+    }
+    for (const r of get(SHEETS.services)) {
+      const service = servicesNow.find((x) => x.id === (serviceMap.get(pick(r, ["id"])) ?? pick(r, ["id"]))) ?? servicesNow.find((x) => norm(x.name) === norm(pick(r, ["nombre", "name"])));
+      const professional_id = resolve(r, ["profesional_id"], [], proMap, prosNow, (x) => x.full_name);
+      if (service && professional_id) await sb.from("services").update({ professional_id }).eq("id", service.id).eq("business_id", businessId);
+    }
 
     await merge("professional_services", get(SHEETS.professionalServices), "servicios_profesionales", (r) => { const professional_id = resolve(r, ["profesional_id"], ["profesional"], proMap, prosNow, (x) => x.full_name); const service_id = resolve(r, ["servicio_id"], ["servicio"], serviceMap, servicesNow, (x) => x.name); return professional_id && service_id ? { professional_id, service_id } : null; }, (r, xs) => { const pId = resolve(r, ["profesional_id"], ["profesional"], proMap, prosNow, (x) => x.full_name); const sId = resolve(r, ["servicio_id"], ["servicio"], serviceMap, servicesNow, (x) => x.name); return xs.find((x) => x.professional_id === pId && x.service_id === sId); });
     await merge("packages", get(SHEETS.packages), "paquetes", (r) => { const name = pick(r, ["nombre", "name"]); if (!name) return null; return { name, service_id: resolve(r, ["servicio_id"], ["servicio"], serviceMap, servicesNow, (x) => x.name), sessions_total: Math.max(1, Math.round(num(pick(r, ["sesiones", "sessions_total"]))) || 1), price_cents: cents(r, ["precio_centavos", "price_cents"], ["precio"]), active: yes(pick(r, ["activo", "active"]), true) }; }, (r, xs) => xs.find((x) => norm(x.name) === norm(pick(r, ["nombre", "name"]))), packageMap);

@@ -46,7 +46,7 @@ export function BackupButtons() {
     try {
       const sheets = await parseWorkbook(file);
       const res = await doImport({ data: { sheets } });
-      const totals = Object.values(res.sections).reduce(
+      const totals = Object.values(res.sections as Record<string, { added: number; updated: number; skipped: number }>).reduce(
         (sum, section) => ({
           added: sum.added + section.added,
           updated: sum.updated + section.updated,
@@ -57,6 +57,7 @@ export function BackupButtons() {
       toast.success(
         `Restauración lista: ${totals.added} agregados · ${totals.updated} actualizados · ${totals.skipped} omitidos`,
       );
+      if (res.warnings.length) toast.warning(`${res.warnings.length} aviso(s): revisa registros sin relación`);
       qc.invalidateQueries();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo importar");
