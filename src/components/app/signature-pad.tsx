@@ -155,14 +155,55 @@ export function SignaturePad({
         </div>
       </div>
 
+      <div className="mt-4 rounded-2xl border border-border bg-secondary/40 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            <ShieldCheck className="h-4 w-4 text-primary" /> Tratamiento de datos personales
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowPolicy((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            {showPolicy ? (
+              <>Ocultar política <ChevronUp className="h-3.5 w-3.5" /></>
+            ) : (
+              <>Ver política <ChevronDown className="h-3.5 w-3.5" /></>
+            )}
+          </button>
+        </div>
+        {showPolicy && (
+          <div className="mt-3 max-h-48 overflow-y-auto rounded-xl bg-background p-3 text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line">
+            {DATA_POLICY_TEXT}
+          </div>
+        )}
+        <label className="mt-3 flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={accepted}
+            onChange={(e) => setAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-input accent-[#25D366]"
+          />
+          <span className="text-xs text-foreground/80">
+            El cliente acepta la política de tratamiento de datos personales (Ley 1581 de 2012) y autoriza el uso
+            de sus datos para la gestión de citas, pagos y comunicaciones del establecimiento.
+          </span>
+        </label>
+      </div>
+
       <div className="mt-5 flex flex-wrap justify-end gap-2">
         <button type="button" className={btnGhost} onClick={onCancel}>
           Cancelar
         </button>
-        <button type="button" className={btnPrimary} onClick={save} disabled={!hasInk}>
+        <button type="button" className={btnPrimary} onClick={save} disabled={!hasInk || !accepted}>
           Confirmar cita firmada
         </button>
       </div>
+      {(!hasInk || !accepted) && (
+        <p className="mt-2 text-right text-[11px] text-muted-foreground">
+          Se requiere la firma y la aceptación de la política de datos.
+        </p>
+      )}
     </Modal>
   );
 }
