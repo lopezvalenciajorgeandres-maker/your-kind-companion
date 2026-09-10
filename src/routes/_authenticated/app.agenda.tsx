@@ -2068,11 +2068,17 @@ function buildWhatsAppReminder(phone: string, a: any): WhatsAppReminder | null {
   };
 }
 
-function buildDebtReminder(phone: string, a: any, balanceCents: number, currency: string): WhatsAppReminder | null {
+function buildDebtReminder(
+  phone: string,
+  clientName: string,
+  serviceName: string,
+  balanceCents: number,
+  currency: string,
+): WhatsAppReminder | null {
   const num = normalizePhone(phone);
   if (!num) return null;
-  const nombre = a.client?.full_name ?? "";
-  const servicio = a.service?.name ? `tu ${a.service.name}` : "tu servicio";
+  const nombre = clientName ?? "";
+  const servicio = serviceName ? `tu ${serviceName}` : "tu servicio";
   const monto = formatMoney(balanceCents, currency);
   const msg =
     `Hola ${nombre} 💜, esperamos que estés muy bien. ` +
