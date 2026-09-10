@@ -496,6 +496,7 @@ export type Database = {
           address: string | null
           birthdate: string | null
           business_id: string
+          city: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -508,6 +509,7 @@ export type Database = {
           service_id: string | null
           service_price_cents: number | null
           source: string | null
+          state: string | null
           updated_at: string
           whatsapp: string | null
         }
@@ -515,6 +517,7 @@ export type Database = {
           address?: string | null
           birthdate?: string | null
           business_id: string
+          city?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -527,6 +530,7 @@ export type Database = {
           service_id?: string | null
           service_price_cents?: number | null
           source?: string | null
+          state?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -534,6 +538,7 @@ export type Database = {
           address?: string | null
           birthdate?: string | null
           business_id?: string
+          city?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -546,6 +551,7 @@ export type Database = {
           service_id?: string | null
           service_price_cents?: number | null
           source?: string | null
+          state?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
