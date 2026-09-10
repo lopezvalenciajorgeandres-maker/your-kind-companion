@@ -118,54 +118,6 @@ export const exportData = createServerFn({ method: "POST" })
     });
   });
 
-export const createBackup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const businessId = await requireBusinessId(context.supabase, context.userId);
-    const [business, clients, services, professionals, appointments, payments, hours, notes] = await Promise.all([
-      context.supabase.from("businesses").select("*").eq("id", businessId).maybeSingle(),
-      context.supabase.from("clients").select("*").eq("business_id", businessId),
-      context.supabase.from("services").select("*").eq("business_id", businessId),
-      context.supabase.from("professionals").select("*").eq("business_id", businessId),
-      context.supabase.from("appointments").select("*").eq("business_id", businessId),
-      context.supabase.from("payments").select("*").eq("business_id", businessId),
-      context.supabase.from("business_hours").select("*").eq("business_id", businessId),
-      context.supabase.from("client_notes").select("*").eq("business_id", businessId),
-    ]);
-
-    const payload = {
-      generated_at: new Date().toISOString(),
-      business: business.data,
-      clients: clients.data ?? [],
-      services: services.data ?? [],
-      professionals: professionals.data ?? [],
-      appointments: appointments.data ?? [],
-      payments: payments.data ?? [],
-      business_hours: hours.data ?? [],
-      client_notes: notes.data ?? [],
-    };
-    const size = JSON.stringify(payload).length;
-
-    await context.supabase
-      .from("backups")
-      .insert({ business_id: businessId, created_by: context.userId, size_bytes: size, destination: "download" });
-
-    return { payload, size };
-  });
-
-export const listBackups = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const businessId = await requireBusinessId(context.supabase, context.userId);
-    const { data } = await context.supabase
-      .from("backups")
-      .select("*")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    return data ?? [];
-  });
-
 export const listIntegrations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
