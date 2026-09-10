@@ -12,6 +12,8 @@ const clientSchema = z.object({
   birthdate: z.string().trim().min(4).max(10).optional().nullable(),
   gender: z.string().trim().max(30).optional().nullable(),
   address: z.string().trim().max(300).optional().nullable(),
+  city: z.string().trim().max(120).optional().nullable(),
+  state: z.string().trim().max(120).optional().nullable(),
   source: z.string().trim().max(60).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
   service_id: z.string().uuid().optional().nullable(),
