@@ -1121,8 +1121,10 @@ function Agenda() {
                     baseColor = color;
                   }
 
-                  const cardColor = baseColor;
-                  const textColor = readableText(baseColor);
+                  const cardColor = hasPendingBalance
+                    ? `linear-gradient(to bottom, ${baseColor} 50%, #F59E0B 50%)`
+                    : baseColor;
+                  const textColor = hasPendingBalance ? "#1a1512" : readableText(baseColor);
 
                   const dragging = drag?.id === a.id && drag.moved;
                   const previewTop = dragging ? ((drag!.minutes - HOURS[0] * 60) / 60) * SLOT_HEIGHT : top;
