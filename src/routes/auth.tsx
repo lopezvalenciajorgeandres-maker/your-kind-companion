@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { lovable } from "@/integrations/lovable";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logoUrl from "@/assets/eleva-logo.png";
 import { ArrowLeft } from "lucide-react";
@@ -19,8 +18,13 @@ export const Route = createFileRoute("/auth")({
   component: Auth,
 });
 
+type Mode = "signin" | "signup" | "reset" | "recovery";
+
 function Auth() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,24 +32,85 @@ function Auth() {
       if (data.session) navigate({ to: "/app", replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("recovery");
+        return;
+      }
       if (event === "SIGNED_IN" && session) navigate({ to: "/app", replace: true });
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  async function signIn() {
+  const redirectTo = () => window.location.origin + "/auth";
+
+  async function signInWithGoogle() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth",
-    });
-    if (result.error) {
-      toast.error(result.error.message || "No pudimos iniciar sesión");
+    // Supabase responde el error "provider is not enabled" en la página de redirección,
+    // así que verificamos antes para poder avisar aquí mismo.
+    if (!(await isGoogleEnabled())) {
+      toast.error("Google aún no está habilitado en Supabase. Ingresa con tu correo y contraseña.");
       setLoading(false);
       return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/app", replace: true });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: redirectTo() },
+    });
+    if (error) {
+      toast.error(error.message || "No pudimos iniciar sesión con Google");
+      setLoading(false);
+    }
   }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        return; // onAuthStateChange redirige a /app
+      }
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: redirectTo() },
+        });
+        if (error) throw error;
+        if (data.session) return; // confirmación de correo desactivada: entra directo
+        toast.success("Te enviamos un correo para confirmar tu cuenta. Revisa tu bandeja.");
+        setMode("signin");
+        return;
+      }
+      if (mode === "reset") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: redirectTo() });
+        if (error) throw error;
+        toast.success("Te enviamos un enlace para restablecer tu contraseña.");
+        setMode("signin");
+        return;
+      }
+      if (mode === "recovery") {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        toast.success("Contraseña actualizada.");
+        navigate({ to: "/app", replace: true });
+        return;
+      }
+    } catch (err) {
+      toast.error(translateAuthError(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const title =
+    mode === "signup" ? "Crea tu cuenta" : mode === "reset" ? "Recuperar contraseña" : mode === "recovery" ? "Nueva contraseña" : "Bienvenida a Eleva";
+  const cta =
+    mode === "signup" ? "Crear cuenta" : mode === "reset" ? "Enviar enlace" : mode === "recovery" ? "Guardar contraseña" : "Ingresar";
+
+  const inputClass =
+    "mt-1 w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 transition";
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
@@ -66,18 +131,91 @@ function Auth() {
         </Link>
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-sm">
-            <h1 className="font-serif text-3xl">Bienvenida a Eleva</h1>
+            <h1 className="font-serif text-3xl">{title}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ingresa con tu cuenta de Google para acceder al sistema de agendamiento.
+              {mode === "signup"
+                ? "Regístrate con tu correo para acceder al sistema de agendamiento."
+                : mode === "reset"
+                  ? "Escribe tu correo y te enviaremos un enlace para crear una nueva contraseña."
+                  : mode === "recovery"
+                    ? "Elige una nueva contraseña para tu cuenta."
+                    : "Ingresa con tu correo o con Google para acceder al sistema de agendamiento."}
             </p>
-            <button
-              onClick={signIn}
-              disabled={loading}
-              className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-full border border-border bg-white px-6 py-3 text-sm font-medium hover:bg-secondary/50 disabled:opacity-60 transition"
-            >
-              <GoogleIcon />
-              {loading ? "Conectando..." : "Continuar con Google"}
-            </button>
+
+            <form onSubmit={submit} className="mt-8 space-y-4">
+              {mode !== "recovery" && (
+                <label className="block text-sm">
+                  <span className="text-foreground/80">Correo electrónico</span>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputClass}
+                    placeholder="tu@correo.com"
+                  />
+                </label>
+              )}
+              {mode !== "reset" && (
+                <label className="block text-sm">
+                  <span className="text-foreground/80">{mode === "recovery" ? "Nueva contraseña" : "Contraseña"}</span>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                </label>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60 transition"
+              >
+                {loading ? "Un momento..." : cta}
+              </button>
+            </form>
+
+            {mode === "signin" && (
+              <>
+                <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" /> o <span className="h-px flex-1 bg-border" />
+                </div>
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  disabled={loading}
+                  className="w-full inline-flex items-center justify-center gap-3 rounded-full border border-border bg-white px-6 py-3 text-sm font-medium hover:bg-secondary/50 disabled:opacity-60 transition"
+                >
+                  <GoogleIcon />
+                  Continuar con Google
+                </button>
+              </>
+            )}
+
+            <div className="mt-6 flex flex-col gap-2 text-sm text-muted-foreground">
+              {mode === "signin" && (
+                <>
+                  <button type="button" onClick={() => setMode("signup")} className="text-left hover:text-foreground">
+                    ¿No tienes cuenta? <span className="underline">Regístrate</span>
+                  </button>
+                  <button type="button" onClick={() => setMode("reset")} className="text-left hover:text-foreground">
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </>
+              )}
+              {(mode === "signup" || mode === "reset") && (
+                <button type="button" onClick={() => setMode("signin")} className="text-left hover:text-foreground">
+                  ¿Ya tienes cuenta? <span className="underline">Ingresar</span>
+                </button>
+              )}
+            </div>
+
             <p className="mt-6 text-xs text-muted-foreground">
               Al continuar aceptas nuestros términos y política de privacidad.
               El registro y la agenda son 100% gratuitos.
@@ -87,6 +225,28 @@ function Auth() {
       </div>
     </div>
   );
+}
+
+async function isGoogleEnabled(): Promise<boolean> {
+  try {
+    const url = import.meta.env["VITE_SUPABASE_URL"] as string;
+    const key = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string;
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+    const json = (await res.json()) as { external?: Record<string, boolean> };
+    return Boolean(json.external?.["google"]);
+  } catch {
+    return true; // si no podemos verificar, dejamos que Supabase decida
+  }
+}
+
+function translateAuthError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/invalid login credentials/i.test(msg)) return "Correo o contraseña incorrectos.";
+  if (/email not confirmed/i.test(msg)) return "Confirma tu correo antes de ingresar. Revisa tu bandeja de entrada.";
+  if (/already registered|already exists/i.test(msg)) return "Ese correo ya tiene una cuenta. Ingresa con tu contraseña.";
+  if (/password should be at least/i.test(msg)) return "La contraseña debe tener al menos 6 caracteres.";
+  if (/rate limit|too many/i.test(msg)) return "Demasiados intentos. Espera un momento e inténtalo de nuevo.";
+  return msg || "Algo salió mal. Inténtalo de nuevo.";
 }
 
 function GoogleIcon() {
