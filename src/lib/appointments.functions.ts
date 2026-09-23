@@ -112,9 +112,12 @@ export const deleteAppointment = createServerFn({ method: "POST" })
       .eq("business_id", businessId);
     if (error) throw new Error(error.message);
 
-    // Un tratamiento sin citas ni abonos es un registro huérfano: seguiría mostrando
-    // saldo en los recordatorios de WhatsApp y en Pagos. Se elimina con la cita.
+    // La agenda manda: al borrar la última cita de un tratamiento, este desaparece
+    // junto con su saldo de los recordatorios de WhatsApp y de Pagos.
+    // Única excepción: si ya tiene abonos cobrados, borrarlo destruiría el registro
+    // contable de ese dinero, así que se conserva y se avisa al usuario.
     let deletedTreatment = false;
+    let keptForPayments = 0;
     if (appt?.treatment_id) {
       const [{ count: apptCount }, { count: payCount }] = await Promise.all([
         context.supabase
@@ -128,17 +131,21 @@ export const deleteAppointment = createServerFn({ method: "POST" })
           .eq("business_id", businessId)
           .eq("treatment_id", appt.treatment_id),
       ]);
-      if ((apptCount ?? 0) === 0 && (payCount ?? 0) === 0) {
-        await context.supabase
-          .from("treatments")
-          .delete()
-          .eq("id", appt.treatment_id)
-          .eq("business_id", businessId);
-        deletedTreatment = true;
+      if ((apptCount ?? 0) === 0) {
+        if ((payCount ?? 0) === 0) {
+          await context.supabase
+            .from("treatments")
+            .delete()
+            .eq("id", appt.treatment_id)
+            .eq("business_id", businessId);
+          deletedTreatment = true;
+        } else {
+          keptForPayments = payCount ?? 0;
+        }
       }
     }
 
-    return { ok: true, deletedTreatment };
+    return { ok: true, deletedTreatment, keptForPayments };
   });
 
 export const completeAppointmentSession = createServerFn({ method: "POST" })

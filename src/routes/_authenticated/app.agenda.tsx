@@ -13,7 +13,7 @@ import { ClientForm, type ClientPayload } from "@/components/app/client-form";
 import { Modal } from "@/components/app/kit";
 import { SignaturePad } from "@/components/app/signature-pad";
 import { BackupButtons } from "@/components/app/backup-buttons";
-import { closeTreatment, createTreatment, deleteTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
+import { closeTreatment, createTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
 import { useTenant } from "@/lib/use-tenant";
 import { formatMoney } from "@/lib/plan";
 import { listReceivables } from "@/lib/payments.functions";
@@ -92,7 +92,6 @@ function Agenda() {
   const [presetDay, setPresetDay] = useState<Date | null>(null);
   const [modal, setModal] = useState(false);
   const [reminder, setReminder] = useState<WhatsAppReminder | null>(null);
-  const [deleteTreat, setDeleteTreat] = useState<TreatmentSummary | null>(null);
   const [editAppt, setEditAppt] = useState<any | null>(null);
   const [signAppt, setSignAppt] = useState<any | null>(null);
   const [confirmUnlockDay, setConfirmUnlockDay] = useState<Date | null>(null);
@@ -136,7 +135,6 @@ function Agenda() {
   const createTreat = useServerFn(createTreatment);
   const updateTreat = useServerFn(updateTreatment);
   const closeTreat = useServerFn(closeTreatment);
-  const delTreat = useServerFn(deleteTreatment);
   const completeAppt = useServerFn(completeAppointmentSession);
   const getTreatments = useServerFn(listTreatments);
   const getReceivables = useServerFn(listReceivables);
@@ -361,7 +359,11 @@ function Agenda() {
   const statusMut = useMutation({
     mutationFn: (v: { id: string; status: "scheduled" | "cancelled" }) => update({ data: v }),
     onSuccess: (_r, v) => {
+      // Una cita cancelada deja de contar como sesión agendada y sale de Pagos.
       qc.invalidateQueries({ queryKey: ["appts"] });
+      qc.invalidateQueries({ queryKey: ["treatments"] });
+      qc.invalidateQueries({ queryKey: ["receivables"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(v.status === "scheduled" ? "Reserva confirmada" : "Reserva rechazada — horario liberado");
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo actualizar la reserva"),
@@ -377,30 +379,21 @@ function Agenda() {
       qc.invalidateQueries({ queryKey: ["treatments"] });
       qc.invalidateQueries({ queryKey: ["receivables"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
-      toast.success(
-        r?.deletedTreatment
-          ? "Cita eliminada — también se borró su tratamiento y el saldo pendiente"
-          : "Cita eliminada",
-      );
+      if (r?.keptForPayments) {
+        toast.warning(
+          `Cita eliminada. El saldo sigue visible porque el tratamiento tiene ${r.keptForPayments} abono(s) cobrado(s): elimínalos en Pagos para que desaparezca.`,
+        );
+      } else {
+        toast.success(
+          r?.deletedTreatment
+            ? "Cita eliminada — también se borró su tratamiento y el saldo pendiente"
+            : "Cita eliminada",
+        );
+      }
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo eliminar la cita"),
   });
 
-  const deleteTreatMut = useMutation({
-    mutationFn: (id: string) => delTreat({ data: { id } }),
-    onSuccess: (r: any) => {
-      qc.invalidateQueries({ queryKey: ["treatments"] });
-      qc.invalidateQueries({ queryKey: ["receivables"] });
-      qc.invalidateQueries({ queryKey: ["appts"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-      toast.success(
-        r?.unlinkedAppointments
-          ? `Tratamiento eliminado — ${r.unlinkedAppointments} cita(s) quedaron sin tratamiento`
-          : "Tratamiento y saldo eliminados",
-      );
-    },
-    onError: (e: any) => toast.error(e?.message ?? "No se pudo eliminar el tratamiento"),
-  });
 
   const moveMut = useMutation({
     mutationFn: (v: { id: string; starts_at: string; ends_at: string; service_id?: string | null; price_cents?: number | null }) =>
@@ -1444,8 +1437,6 @@ function Agenda() {
               const rem = phone
                 ? buildDebtReminder(phone, t.client_name, t.service_name, t.balance_cents, tenant.currency)
                 : null;
-              // Sin citas ni abonos, el tratamiento quedó huérfano (p. ej. se borró su cita).
-              const orphan = t.sessions_scheduled === 0 && t.paid_cents === 0;
               return (
                 <div
                   key={t.id}
@@ -1454,40 +1445,23 @@ function Agenda() {
                   <div className="min-w-0">
                     <div className="font-medium truncate">{t.client_name}</div>
                     <div className="text-xs text-muted-foreground">{t.service_name}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                    <div className="mt-1 text-xs">
                       <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-semibold text-amber-600">
                         Saldo {formatMoney(t.balance_cents, tenant.currency)}
                       </span>
-                      {orphan && (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                          Sin citas ni abonos
-                        </span>
-                      )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {rem ? (
-                      <button
-                        type="button"
-                        onClick={() => setReminder(rem)}
-                        className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-                      >
-                        <MessageCircle className="h-4 w-4" /> Recordar saldo
-                      </button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Sin teléfono registrado</span>
-                    )}
+                  {rem ? (
                     <button
                       type="button"
-                      onClick={() => setDeleteTreat(t)}
-                      disabled={deleteTreatMut.isPending}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                      aria-label={`Eliminar el saldo de ${t.client_name} por ${t.service_name}`}
-                      title="Eliminar este tratamiento y su saldo"
+                      onClick={() => setReminder(rem)}
+                      className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <MessageCircle className="h-4 w-4" /> Recordar saldo
                     </button>
-                  </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Sin teléfono registrado</span>
+                  )}
                 </div>
               );
             });
@@ -1528,9 +1502,11 @@ function Agenda() {
               const ns = new Date(payload.starts_at);
               const ne = new Date(payload.ends_at);
               syncHoursWithAppointment(ns, ns.getHours() * 60 + ns.getMinutes(), ne.getHours() * 60 + ne.getMinutes());
+              // La nueva cita debe aparecer de inmediato en los recordatorios y en Pagos.
               qc.invalidateQueries({ queryKey: ["appts"] });
               qc.invalidateQueries({ queryKey: ["treatments"] });
               qc.invalidateQueries({ queryKey: ["receivables"] });
+              qc.invalidateQueries({ queryKey: ["dashboard"] });
               toast.success("Cita creada");
               setModal(false);
             } catch (e) {
@@ -1545,46 +1521,6 @@ function Agenda() {
           reminder={reminder}
           onClose={() => setReminder(null)}
         />
-      )}
-
-      {deleteTreat && (
-        <Modal title="Eliminar saldo pendiente" onClose={() => setDeleteTreat(null)}>
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <Trash2 className="h-7 w-7" />
-            </div>
-            <p className="text-base text-foreground">
-              ¿Eliminar el tratamiento <span className="font-semibold">{deleteTreat.service_name}</span> de{" "}
-              <span className="font-semibold">{deleteTreat.client_name}</span> con saldo de{" "}
-              <span className="font-semibold">{formatMoney(deleteTreat.balance_cents, tenant.currency)}</span>?
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Desaparecerá de los recordatorios de WhatsApp y de los saldos en Pagos.
-              {deleteTreat.paid_cents > 0
-                ? " Ojo: tiene abonos registrados, así que primero debes eliminarlos en Pagos."
-                : deleteTreat.sessions_scheduled > 0
-                  ? ` Sus ${deleteTreat.sessions_scheduled} cita(s) se conservan en la agenda, pero quedarán sin tratamiento.`
-                  : " No tiene citas ni abonos asociados."}
-            </p>
-            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-              <Button type="button" variant="outline" onClick={() => setDeleteTreat(null)} className="w-full sm:w-auto">
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={deleteTreatMut.isPending}
-                onClick={() => {
-                  deleteTreatMut.mutate(deleteTreat.id);
-                  setDeleteTreat(null);
-                }}
-                className="w-full sm:w-auto"
-              >
-                {deleteTreatMut.isPending ? "Eliminando…" : "Sí, eliminar"}
-              </Button>
-            </div>
-          </div>
-        </Modal>
       )}
 
       {signAppt && (
