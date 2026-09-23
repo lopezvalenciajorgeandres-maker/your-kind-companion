@@ -96,13 +96,49 @@ export const deleteAppointment = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
+
+    // Se guarda el tratamiento para poder limpiarlo si la cita era la única que lo sostenía.
+    const { data: appt } = await context.supabase
+      .from("appointments")
+      .select("treatment_id")
+      .eq("id", data.id)
+      .eq("business_id", businessId)
+      .maybeSingle();
+
     const { error } = await context.supabase
       .from("appointments")
       .delete()
       .eq("id", data.id)
       .eq("business_id", businessId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    // Un tratamiento sin citas ni abonos es un registro huérfano: seguiría mostrando
+    // saldo en los recordatorios de WhatsApp y en Pagos. Se elimina con la cita.
+    let deletedTreatment = false;
+    if (appt?.treatment_id) {
+      const [{ count: apptCount }, { count: payCount }] = await Promise.all([
+        context.supabase
+          .from("appointments")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("treatment_id", appt.treatment_id),
+        context.supabase
+          .from("payments")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("treatment_id", appt.treatment_id),
+      ]);
+      if ((apptCount ?? 0) === 0 && (payCount ?? 0) === 0) {
+        await context.supabase
+          .from("treatments")
+          .delete()
+          .eq("id", appt.treatment_id)
+          .eq("business_id", businessId);
+        deletedTreatment = true;
+      }
+    }
+
+    return { ok: true, deletedTreatment };
   });
 
 export const completeAppointmentSession = createServerFn({ method: "POST" })

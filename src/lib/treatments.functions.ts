@@ -166,11 +166,39 @@ export const deleteTreatment = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const businessId = await requireBusinessId(context.supabase, context.userId);
+
+    // Un tratamiento con abonos registrados no se borra: rompería la contabilidad.
+    // Primero hay que eliminar esos pagos desde la sección Pagos.
+    const { count: payCount } = await context.supabase
+      .from("payments")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", businessId)
+      .eq("treatment_id", data.id);
+    if ((payCount ?? 0) > 0) {
+      throw new Error(
+        `Este tratamiento tiene ${payCount} abono(s) registrado(s). Elimínalos primero en Pagos para poder borrarlo.`,
+      );
+    }
+
+    // Las citas se conservan, pero dejan de estar ligadas al tratamiento.
+    const { count: apptCount } = await context.supabase
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", businessId)
+      .eq("treatment_id", data.id);
+    if ((apptCount ?? 0) > 0) {
+      await context.supabase
+        .from("appointments")
+        .update({ treatment_id: null })
+        .eq("business_id", businessId)
+        .eq("treatment_id", data.id);
+    }
+
     const { error } = await context.supabase
       .from("treatments")
       .delete()
       .eq("id", data.id)
       .eq("business_id", businessId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, unlinkedAppointments: apptCount ?? 0 };
   });
