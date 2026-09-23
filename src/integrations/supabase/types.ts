@@ -119,6 +119,149 @@ export type Database = {
           },
         ]
       }
+      assessments: {
+        Row: {
+          appointment_id: string | null
+          arm_left_cm: number | null
+          arm_right_cm: number | null
+          back_cm: number | null
+          blood_pressure: string | null
+          body_fat_pct: number | null
+          business_id: string
+          bust_cm: number | null
+          calf_left_cm: number | null
+          calf_right_cm: number | null
+          category: string
+          chest_cm: number | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          details: Json
+          gluteus_cm: number | null
+          height_cm: number | null
+          hip_cm: number | null
+          id: string
+          lower_abdomen_cm: number | null
+          muscle_mass_pct: number | null
+          notes: string | null
+          photo_back: string | null
+          photo_front: string | null
+          photo_side: string | null
+          recorded_at: string
+          stage: string
+          thigh_left_cm: number | null
+          thigh_right_cm: number | null
+          treatment_id: string | null
+          updated_at: string
+          upper_abdomen_cm: number | null
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          arm_left_cm?: number | null
+          arm_right_cm?: number | null
+          back_cm?: number | null
+          blood_pressure?: string | null
+          body_fat_pct?: number | null
+          business_id: string
+          bust_cm?: number | null
+          calf_left_cm?: number | null
+          calf_right_cm?: number | null
+          category?: string
+          chest_cm?: number | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          gluteus_cm?: number | null
+          height_cm?: number | null
+          hip_cm?: number | null
+          id?: string
+          lower_abdomen_cm?: number | null
+          muscle_mass_pct?: number | null
+          notes?: string | null
+          photo_back?: string | null
+          photo_front?: string | null
+          photo_side?: string | null
+          recorded_at?: string
+          stage: string
+          thigh_left_cm?: number | null
+          thigh_right_cm?: number | null
+          treatment_id?: string | null
+          updated_at?: string
+          upper_abdomen_cm?: number | null
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          arm_left_cm?: number | null
+          arm_right_cm?: number | null
+          back_cm?: number | null
+          blood_pressure?: string | null
+          body_fat_pct?: number | null
+          business_id?: string
+          bust_cm?: number | null
+          calf_left_cm?: number | null
+          calf_right_cm?: number | null
+          category?: string
+          chest_cm?: number | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          gluteus_cm?: number | null
+          height_cm?: number | null
+          hip_cm?: number | null
+          id?: string
+          lower_abdomen_cm?: number | null
+          muscle_mass_pct?: number | null
+          notes?: string | null
+          photo_back?: string | null
+          photo_front?: string | null
+          photo_side?: string | null
+          recorded_at?: string
+          stage?: string
+          thigh_left_cm?: number | null
+          thigh_right_cm?: number | null
+          treatment_id?: string | null
+          updated_at?: string
+          upper_abdomen_cm?: number | null
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

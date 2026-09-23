@@ -14,6 +14,8 @@ import { Modal } from "@/components/app/kit";
 import { SignaturePad } from "@/components/app/signature-pad";
 import { BackupButtons } from "@/components/app/backup-buttons";
 import { closeTreatment, createTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
+import { listAssessments, saveAssessment, type Assessment, type AssessmentStage } from "@/lib/assessments.functions";
+import { AssessmentForm, guessCategory } from "@/components/app/assessment-form";
 import { useTenant } from "@/lib/use-tenant";
 import { formatMoney } from "@/lib/plan";
 import { listReceivables } from "@/lib/payments.functions";
@@ -94,6 +96,8 @@ function Agenda() {
   const [reminder, setReminder] = useState<WhatsAppReminder | null>(null);
   const [editAppt, setEditAppt] = useState<any | null>(null);
   const [signAppt, setSignAppt] = useState<any | null>(null);
+  // Ficha de valoración: se abre tras la firma, en la primera y en la última sesión.
+  const [assessment, setAssessment] = useState<{ appt: any; stage: AssessmentStage } | null>(null);
   const [confirmUnlockDay, setConfirmUnlockDay] = useState<Date | null>(null);
   const [confirmUnlockSlot, setConfirmUnlockSlot] = useState<{ d: Date; m: number } | null>(null);
   const [confirmOffHours, setConfirmOffHours] = useState<{ d: Date; m: number } | null>(null);
@@ -136,6 +140,8 @@ function Agenda() {
   const updateTreat = useServerFn(updateTreatment);
   const closeTreat = useServerFn(closeTreatment);
   const completeAppt = useServerFn(completeAppointmentSession);
+  const getAssessments = useServerFn(listAssessments);
+  const saveAssess = useServerFn(saveAssessment);
   const getTreatments = useServerFn(listTreatments);
   const getReceivables = useServerFn(listReceivables);
   const tenant = useTenant();
@@ -446,6 +452,37 @@ function Agenda() {
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo actualizar la sesión"),
   });
+
+  // Fichas ya guardadas del tratamiento que se está valorando.
+  const assessTreatmentId = assessment?.appt?.treatment_id ?? null;
+  const assessments = useQuery({
+    queryKey: ["assessments", assessTreatmentId],
+    queryFn: () => getAssessments({ data: { treatment_id: assessTreatmentId } }),
+    enabled: !!assessTreatmentId,
+  });
+
+  const saveAssessMut = useMutation({
+    mutationFn: (v: any) => saveAssess({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments"] });
+      setAssessment(null);
+      toast.success("Ficha de valoración guardada");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "No se pudo guardar la ficha"),
+  });
+
+  /**
+   * La ficha solo se pide dos veces por tratamiento: al completar la primera
+   * sesión (cómo inicia) y al completar la última (cómo termina).
+   */
+  function assessmentStageFor(a: any): AssessmentStage | null {
+    const tr = a.treatment_id ? (treatments.data ?? []).find((t) => t.id === a.treatment_id) : null;
+    if (!tr) return null;
+    // sessions_done aún no incluye esta sesión: se está completando ahora.
+    if (tr.sessions_done === 0) return "inicial";
+    if (tr.sessions_done + 1 >= tr.sessions_total) return "final";
+    return null;
+  }
 
   // Al chulear una sesión pedimos la firma del cliente; al deshacer, no.
   function toggleSession(a: any) {
@@ -1538,6 +1575,7 @@ function Agenda() {
           })} se cumplió. Puede firmar con el dedo en celular o tablet, o con el touchpad en el computador.`}
           onCancel={() => setSignAppt(null)}
           onDone={(signature, signedBy) => {
+            const stage = assessmentStageFor(signAppt);
             completeApptMut.mutate({
               id: signAppt.id,
               completed: true,
@@ -1545,7 +1583,37 @@ function Agenda() {
               signed_by_name: signedBy || null,
               data_consent: true,
             });
+            // Tras la firma se abre la ficha de valoración si es la primera o la última sesión.
+            if (stage) setAssessment({ appt: signAppt, stage });
             setSignAppt(null);
+          }}
+        />
+      )}
+
+      {assessment && !assessments.isLoading && (
+        <AssessmentForm
+          stage={assessment.stage}
+          category={guessCategory(assessment.appt.service?.name)}
+          clientName={
+            [assessment.appt.client?.full_name, assessment.appt.client?.last_name].filter(Boolean).join(" ") ||
+            "Cliente"
+          }
+          serviceName={assessment.appt.service?.name}
+          existing={(assessments.data ?? []).find((a: Assessment) => a.stage === assessment.stage) ?? null}
+          baseline={(assessments.data ?? []).find((a: Assessment) => a.stage === "inicial") ?? null}
+          saving={saveAssessMut.isPending}
+          onClose={() => setAssessment(null)}
+          onSave={({ category, values }) => {
+            const existing = (assessments.data ?? []).find((a: Assessment) => a.stage === assessment.stage);
+            saveAssessMut.mutate({
+              ...(existing ? { id: existing.id } : {}),
+              client_id: assessment.appt.client_id,
+              treatment_id: assessment.appt.treatment_id ?? null,
+              appointment_id: assessment.appt.id,
+              stage: assessment.stage,
+              category,
+              ...values,
+            });
           }}
         />
       )}
