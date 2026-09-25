@@ -15,8 +15,9 @@ const apptSchema = z.object({
   notes: z.string().trim().max(1000).optional().nullable(),
 });
 
+// birthdate y gender alimentan el cálculo automático de la ficha de valoración.
 const SELECT =
-  "*, client:clients(id, full_name, phone, whatsapp), service:services(id, name, color, duration_min, price_cents), professional:professionals(id, full_name, color)";
+  "*, client:clients(id, full_name, last_name, phone, whatsapp, birthdate, gender), service:services(id, name, color, duration_min, price_cents), professional:professionals(id, full_name, color)";
 
 export const listAppointments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

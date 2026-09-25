@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Modal, btnGhost, btnPrimary, inputClass } from "./kit";
-import { Camera, Ruler, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, Camera, Ruler, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import {
   MEASURE_FIELDS,
   type Assessment,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/assessments.functions";
 
 const MEASURE_LABELS: Record<MeasureField, string> = {
+  neck_cm: "Cuello",
   bust_cm: "Busto",
   chest_cm: "Pecho",
   waist_cm: "Cintura",
@@ -101,9 +102,77 @@ export function guessCategory(serviceName?: string | null): AssessmentCategory {
   return "corporal";
 }
 
+export type Sex = "F" | "M";
+
+/**
+ * Composición corporal estimada a partir de las medidas de la ficha.
+ *
+ * · Grasa — método U.S. Navy (Hodgdon & Beckett), el estándar con cinta métrica:
+ *   usa cuello, cintura, cadera (en mujeres) y estatura. Si falta el cuello se
+ *   recurre a Deurenberg, que solo necesita IMC, edad y sexo.
+ * · Masa muscular — masa magra (peso − grasa) por 0,53, proporción habitual de
+ *   músculo esquelético sobre la masa libre de grasa.
+ *
+ * Son estimaciones de seguimiento: lo que importa es la evolución entre la
+ * ficha inicial y la final, medidas siempre igual.
+ */
+export function estimateComposition(input: {
+  weightKg: number | null;
+  heightCm: number | null;
+  ageYears: number | null;
+  sex: Sex | null;
+  neckCm: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+}): { fatPct: number; musclePct: number; method: "navy" | "imc" } | null {
+  const { weightKg, heightCm, ageYears, sex, neckCm, waistCm, hipCm } = input;
+  if (!weightKg || !heightCm || !sex) return null;
+
+  let fatPct: number | null = null;
+  let method: "navy" | "imc" = "navy";
+
+  if (neckCm && waistCm && (sex === "M" || hipCm)) {
+    const log10 = Math.log10;
+    if (sex === "M" && waistCm > neckCm) {
+      fatPct =
+        495 / (1.0324 - 0.19077 * log10(waistCm - neckCm) + 0.15456 * log10(heightCm)) - 450;
+    } else if (sex === "F" && hipCm && waistCm + hipCm > neckCm) {
+      fatPct =
+        495 /
+          (1.29579 - 0.35004 * log10(waistCm + hipCm - neckCm) + 0.221 * log10(heightCm)) -
+        450;
+    }
+  }
+
+  if (fatPct == null || !Number.isFinite(fatPct) || fatPct <= 0) {
+    if (ageYears == null) return null;
+    const bmi = weightKg / (heightCm / 100) ** 2;
+    fatPct = 1.2 * bmi + 0.23 * ageYears - 10.8 * (sex === "M" ? 1 : 0) - 5.4;
+    method = "imc";
+  }
+
+  fatPct = Math.min(70, Math.max(3, fatPct));
+  const musclePct = Math.min(60, Math.max(10, (100 - fatPct) * 0.53));
+  return { fatPct: round1(fatPct), musclePct: round1(musclePct), method };
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Clasificación de grasa corporal (ACE) según sexo. */
+function fatRange(fat: number, sex: Sex) {
+  const limits = sex === "F" ? [24, 31, 39] : [18, 25, 32];
+  if (fat < (sex === "F" ? 14 : 6)) return { label: "Muy bajo", tone: "text-amber-600" };
+  if (fat < limits[0]) return { label: "Atlético / fitness", tone: "text-emerald-600" };
+  if (fat < limits[1]) return { label: "Saludable", tone: "text-emerald-600" };
+  if (fat < limits[2]) return { label: "Sobrepeso", tone: "text-amber-600" };
+  return { label: "Obesidad", tone: "text-destructive" };
+}
+
 export type AssessmentValues = {
   weight_kg: string;
   height_cm: string;
+  age_years: string;
+  sex: Sex | "";
   body_fat_pct: string;
   muscle_mass_pct: string;
   blood_pressure: string;
@@ -118,12 +187,45 @@ export type AssessmentValues = {
 const emptyMeasures = () =>
   Object.fromEntries(MEASURE_FIELDS.map((f) => [f, ""])) as Record<MeasureField, string>;
 
-function toValues(a?: Assessment | null): AssessmentValues {
+/** Edad cumplida a partir de la fecha de nacimiento del cliente. */
+function ageFromBirthdate(birthdate?: string | null): number | null {
+  if (!birthdate) return null;
+  const d = new Date(birthdate);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 120 ? age : null;
+}
+
+function sexFromGender(gender?: string | null): Sex | "" {
+  const g = (gender ?? "").trim().toLowerCase();
+  if (g.startsWith("fem") || g === "f") return "F";
+  if (g.startsWith("mas") || g === "m") return "M";
+  return "";
+}
+
+function toValues(
+  a?: Assessment | null,
+  client?: { birthdate?: string | null; gender?: string | null },
+  /** Datos de la ficha inicial: peso, estatura, edad y sexo no cambian de sesión a sesión. */
+  baseline?: Assessment | null,
+): AssessmentValues {
   const measures = emptyMeasures();
   if (a) for (const f of MEASURE_FIELDS) measures[f] = a[f] != null ? String(a[f]) : "";
+  const age = a?.age_years ?? baseline?.age_years ?? ageFromBirthdate(client?.birthdate);
+  const sex = (a?.sex ?? baseline?.sex ?? sexFromGender(client?.gender)) || "";
   return {
     weight_kg: a?.weight_kg != null ? String(a.weight_kg) : "",
-    height_cm: a?.height_cm != null ? String(a.height_cm) : "",
+    height_cm:
+      a?.height_cm != null
+        ? String(a.height_cm)
+        : baseline?.height_cm != null
+          ? String(baseline.height_cm)
+          : "",
+    age_years: age != null ? String(age) : "",
+    sex: sex as Sex | "",
     body_fat_pct: a?.body_fat_pct != null ? String(a.body_fat_pct) : "",
     muscle_mass_pct: a?.muscle_mass_pct != null ? String(a.muscle_mass_pct) : "",
     blood_pressure: a?.blood_pressure ?? "",
@@ -159,6 +261,7 @@ export function AssessmentForm({
   stage,
   category: initialCategory,
   clientName,
+  client,
   serviceName,
   existing,
   baseline,
@@ -169,6 +272,8 @@ export function AssessmentForm({
   stage: AssessmentStage;
   category: AssessmentCategory;
   clientName: string;
+  /** Fecha de nacimiento y género del cliente: rellenan edad y sexo automáticamente. */
+  client?: { birthdate?: string | null; gender?: string | null };
   serviceName?: string | null;
   /** Ficha ya guardada de esta etapa, para poder editarla. */
   existing?: Assessment | null;
@@ -182,7 +287,7 @@ export function AssessmentForm({
   onClose: () => void;
 }) {
   const [category, setCategory] = useState<AssessmentCategory>(existing?.category ?? initialCategory);
-  const [v, setV] = useState<AssessmentValues>(() => toValues(existing));
+  const [v, setV] = useState<AssessmentValues>(() => toValues(existing, client, baseline));
   const isFinal = stage === "final";
 
   const set = <K extends keyof AssessmentValues>(k: K, value: AssessmentValues[K]) =>
@@ -198,6 +303,35 @@ export function AssessmentForm({
     if (!w || !h) return null;
     return w / (h / 100) ** 2;
   }, [v.weight_kg, v.height_cm]);
+
+  // % grasa y % masa muscular se calculan solos con peso, estatura, sexo,
+  // edad y el perímetro de cuello/cintura/cadera.
+  const comp = useMemo(
+    () =>
+      estimateComposition({
+        weightKg: num(v.weight_kg),
+        heightCm: num(v.height_cm),
+        ageYears: num(v.age_years),
+        sex: v.sex || null,
+        neckCm: num(v.measures.neck_cm),
+        waistCm: num(v.measures.waist_cm),
+        hipCm: num(v.measures.hip_cm),
+      }),
+    [v.weight_kg, v.height_cm, v.age_years, v.sex, v.measures],
+  );
+
+  const weight = num(v.weight_kg);
+  const fatKg = comp && weight ? round1((weight * comp.fatPct) / 100) : null;
+  const muscleKg = comp && weight ? round1((weight * comp.musclePct) / 100) : null;
+  /** Qué falta para poder calcular; guía al usuario en vez de dejar el campo en blanco. */
+  const missing = useMemo(() => {
+    const m: string[] = [];
+    if (!num(v.weight_kg)) m.push("peso");
+    if (!num(v.height_cm)) m.push("estatura");
+    if (!v.sex) m.push("sexo");
+    if (!num(v.measures.neck_cm) && !num(v.age_years)) m.push("cuello o edad");
+    return m;
+  }, [v.weight_kg, v.height_cm, v.sex, v.age_years, v.measures.neck_cm]);
 
   const totalDiff = useMemo(() => {
     if (!isFinal || !baseline) return null;
@@ -259,6 +393,19 @@ export function AssessmentForm({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <Num label="Peso (kg)" value={v.weight_kg} onChange={(x) => set("weight_kg", x)} before={baseline?.weight_kg} isFinal={isFinal} lowerIsBetter />
             <Num label="Estatura (cm)" value={v.height_cm} onChange={(x) => set("height_cm", x)} />
+            <Num label="Edad (años)" value={v.age_years} onChange={(x) => set("age_years", x)} />
+            <div>
+              <span className="text-xs font-medium text-foreground/80">Sexo</span>
+              <select
+                className={`${inputClass} mt-1`}
+                value={v.sex}
+                onChange={(e) => set("sex", e.target.value as Sex | "")}
+              >
+                <option value="">—</option>
+                <option value="F">Femenino</option>
+                <option value="M">Masculino</option>
+              </select>
+            </div>
             <div>
               <span className="text-xs font-medium text-foreground/80">IMC</span>
               <div className={`${inputClass} mt-1 bg-secondary/50 flex items-center justify-between`}>
@@ -266,8 +413,6 @@ export function AssessmentForm({
                 {bmi && <span className="text-[10px] text-muted-foreground">{bmiLabel(bmi)}</span>}
               </div>
             </div>
-            <Num label="% grasa" value={v.body_fat_pct} onChange={(x) => set("body_fat_pct", x)} before={baseline?.body_fat_pct} isFinal={isFinal} lowerIsBetter />
-            <Num label="% masa muscular" value={v.muscle_mass_pct} onChange={(x) => set("muscle_mass_pct", x)} before={baseline?.muscle_mass_pct} isFinal={isFinal} />
           </div>
           <div className="mt-3 max-w-[12rem]">
             <span className="text-xs font-medium text-foreground/80">Presión arterial</span>
@@ -278,6 +423,44 @@ export function AssessmentForm({
               onChange={(e) => set("blood_pressure", e.target.value)}
             />
           </div>
+        </section>
+
+        <section>
+          <SectionTitle icon={Activity}>Composición corporal (automática)</SectionTitle>
+          {comp ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Computed
+                  label="% grasa corporal"
+                  value={comp.fatPct}
+                  suffix="%"
+                  before={baseline?.body_fat_pct}
+                  isFinal={isFinal}
+                  lowerIsBetter
+                  note={v.sex ? fatRange(comp.fatPct, v.sex).label : undefined}
+                  noteTone={v.sex ? fatRange(comp.fatPct, v.sex).tone : undefined}
+                />
+                <Computed label="Masa grasa" value={fatKg} suffix="kg" />
+                <Computed
+                  label="% masa muscular"
+                  value={comp.musclePct}
+                  suffix="%"
+                  before={baseline?.muscle_mass_pct}
+                  isFinal={isFinal}
+                />
+                <Computed label="Masa muscular" value={muscleKg} suffix="kg" />
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {comp.method === "navy"
+                  ? "Calculado con el método U.S. Navy a partir de cuello, cintura, cadera y estatura."
+                  : "Estimado con la fórmula de Deurenberg (IMC, edad y sexo). Toma el perímetro del cuello para un cálculo más preciso."}
+              </p>
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-input px-4 py-3 text-sm text-muted-foreground">
+              Se calcula solo. Falta registrar: <span className="font-medium">{missing.join(", ")}</span>.
+            </div>
+          )}
         </section>
 
         <section>
@@ -419,11 +602,23 @@ export function buildPayload(v: AssessmentValues) {
   const details = Object.fromEntries(
     Object.entries(v.details).filter(([, val]) => String(val).trim() !== ""),
   ) as Record<string, string>;
+  // Se guarda la composición ya calculada para poder compararla después.
+  const comp = estimateComposition({
+    weightKg: num(v.weight_kg),
+    heightCm: num(v.height_cm),
+    ageYears: num(v.age_years),
+    sex: v.sex || null,
+    neckCm: num(v.measures.neck_cm),
+    waistCm: num(v.measures.waist_cm),
+    hipCm: num(v.measures.hip_cm),
+  });
   return {
     weight_kg: num(v.weight_kg),
     height_cm: num(v.height_cm),
-    body_fat_pct: num(v.body_fat_pct),
-    muscle_mass_pct: num(v.muscle_mass_pct),
+    age_years: num(v.age_years),
+    sex: v.sex || null,
+    body_fat_pct: comp?.fatPct ?? null,
+    muscle_mass_pct: comp?.musclePct ?? null,
     blood_pressure: v.blood_pressure.trim() || null,
     ...measures,
     details,
@@ -453,6 +648,53 @@ function SectionTitle({
       {Icon && <Icon className="h-4 w-4 text-primary" />}
       {children}
     </h3>
+  );
+}
+
+/** Resultado calculado: no se edita, y en la ficha final compara con la inicial. */
+function Computed({
+  label,
+  value,
+  suffix,
+  before,
+  isFinal,
+  lowerIsBetter,
+  note,
+  noteTone,
+}: {
+  label: string;
+  value: number | null;
+  suffix: string;
+  before?: number | null;
+  isFinal?: boolean;
+  lowerIsBetter?: boolean;
+  note?: string;
+  noteTone?: string;
+}) {
+  const showDiff = isFinal && before != null && value != null;
+  const diff = showDiff ? value - Number(before) : 0;
+  const good = lowerIsBetter ? diff < 0 : diff > 0;
+  return (
+    <div>
+      <span className="text-xs font-medium text-foreground/80">{label}</span>
+      <div className={`${inputClass} mt-1 bg-secondary/50 flex items-baseline gap-1`}>
+        <span className="font-semibold">{value != null ? value.toFixed(1) : "—"}</span>
+        <span className="text-xs text-muted-foreground">{suffix}</span>
+      </div>
+      {note && <div className={`mt-1 text-[11px] font-medium ${noteTone ?? ""}`}>{note}</div>}
+      {isFinal && before != null && (
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span>Inicial: {Number(before)}</span>
+          {showDiff && Math.abs(diff) >= 0.05 && (
+            <span className={`inline-flex items-center gap-0.5 font-semibold ${good ? "text-emerald-600" : "text-amber-600"}`}>
+              {diff < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
+              {diff > 0 ? "+" : ""}
+              {diff.toFixed(1)}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

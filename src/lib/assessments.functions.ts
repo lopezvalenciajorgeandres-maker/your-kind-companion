@@ -8,6 +8,7 @@ export type AssessmentCategory = "corporal" | "laser" | "facial" | "postquirurgi
 
 /** Medidas corporales en centímetros, comunes a todas las especialidades. */
 export const MEASURE_FIELDS = [
+  "neck_cm",
   "bust_cm",
   "chest_cm",
   "waist_cm",
@@ -36,6 +37,8 @@ export type Assessment = {
   recorded_at: string;
   weight_kg: number | null;
   height_cm: number | null;
+  age_years: number | null;
+  sex: "F" | "M" | null;
   body_fat_pct: number | null;
   muscle_mass_pct: number | null;
   blood_pressure: string | null;
@@ -60,6 +63,8 @@ const saveSchema = z.object({
   category: z.enum(["corporal", "laser", "facial", "postquirurgico"]),
   weight_kg: z.number().min(0).max(500).nullable().optional(),
   height_cm: z.number().min(0).max(260).nullable().optional(),
+  age_years: z.number().int().min(0).max(120).nullable().optional(),
+  sex: z.enum(["F", "M"]).nullable().optional(),
   body_fat_pct: z.number().min(0).max(100).nullable().optional(),
   muscle_mass_pct: z.number().min(0).max(100).nullable().optional(),
   blood_pressure: z.string().trim().max(20).nullable().optional(),

@@ -1598,6 +1598,7 @@ function Agenda() {
             [assessment.appt.client?.full_name, assessment.appt.client?.last_name].filter(Boolean).join(" ") ||
             "Cliente"
           }
+          client={assessment.appt.client}
           serviceName={assessment.appt.service?.name}
           existing={(assessments.data ?? []).find((a: Assessment) => a.stage === assessment.stage) ?? null}
           baseline={(assessments.data ?? []).find((a: Assessment) => a.stage === "inicial") ?? null}

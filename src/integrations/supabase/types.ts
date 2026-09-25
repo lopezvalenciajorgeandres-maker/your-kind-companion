@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -121,6 +121,7 @@ export type Database = {
       }
       assessments: {
         Row: {
+          age_years: number | null
           appointment_id: string | null
           arm_left_cm: number | null
           arm_right_cm: number | null
@@ -143,11 +144,13 @@ export type Database = {
           id: string
           lower_abdomen_cm: number | null
           muscle_mass_pct: number | null
+          neck_cm: number | null
           notes: string | null
           photo_back: string | null
           photo_front: string | null
           photo_side: string | null
           recorded_at: string
+          sex: string | null
           stage: string
           thigh_left_cm: number | null
           thigh_right_cm: number | null
@@ -158,6 +161,7 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
+          age_years?: number | null
           appointment_id?: string | null
           arm_left_cm?: number | null
           arm_right_cm?: number | null
@@ -180,11 +184,13 @@ export type Database = {
           id?: string
           lower_abdomen_cm?: number | null
           muscle_mass_pct?: number | null
+          neck_cm?: number | null
           notes?: string | null
           photo_back?: string | null
           photo_front?: string | null
           photo_side?: string | null
           recorded_at?: string
+          sex?: string | null
           stage: string
           thigh_left_cm?: number | null
           thigh_right_cm?: number | null
@@ -195,6 +201,7 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
+          age_years?: number | null
           appointment_id?: string | null
           arm_left_cm?: number | null
           arm_right_cm?: number | null
@@ -217,11 +224,13 @@ export type Database = {
           id?: string
           lower_abdomen_cm?: number | null
           muscle_mass_pct?: number | null
+          neck_cm?: number | null
           notes?: string | null
           photo_back?: string | null
           photo_front?: string | null
           photo_side?: string | null
           recorded_at?: string
+          sex?: string | null
           stage?: string
           thigh_left_cm?: number | null
           thigh_right_cm?: number | null
