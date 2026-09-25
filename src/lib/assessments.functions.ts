@@ -47,6 +47,9 @@ export type Assessment = {
   photo_front: string | null;
   photo_side: string | null;
   photo_back: string | null;
+  report_client: string | null;
+  report_staff: string | null;
+  report_at: string | null;
 } & Record<MeasureField, number | null>;
 
 // Las fotos se comprimen en el navegador antes de enviarse; el tope evita
@@ -149,6 +152,74 @@ export const saveAssessment = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { id: row.id, created: true };
+  });
+
+/** Guarda el informe de cierre (versión cliente y versión esteticista). */
+export const saveAssessmentReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        report_client: z.string().max(8000).nullable().optional(),
+        report_staff: z.string().max(8000).nullable().optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const businessId = await requireBusinessId(context.supabase, context.userId);
+    const { error } = await context.supabase
+      .from("assessments")
+      .update({
+        report_client: data.report_client ?? null,
+        report_staff: data.report_staff ?? null,
+        report_at: new Date().toISOString(),
+      })
+      .eq("id", data.id)
+      .eq("business_id", businessId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export type ClientAssessmentGroup = {
+  treatment_id: string | null;
+  service_name: string;
+  sessions_total: number | null;
+  inicial: Assessment | null;
+  final: Assessment | null;
+};
+
+/** Valoraciones de un cliente agrupadas por tratamiento, para la ficha del cliente. */
+export const listClientAssessments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ client_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }): Promise<ClientAssessmentGroup[]> => {
+    const businessId = await requireBusinessId(context.supabase, context.userId);
+    const { data: rows, error } = await context.supabase
+      .from("assessments")
+      .select("*, treatment:treatments(id, sessions_total, service:services(name))")
+      .eq("business_id", businessId)
+      .eq("client_id", data.client_id)
+      .order("recorded_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const groups = new Map<string, ClientAssessmentGroup>();
+    for (const row of (rows ?? []) as any[]) {
+      const key = row.treatment_id ?? `suelta-${row.id}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          treatment_id: row.treatment_id ?? null,
+          service_name: row.treatment?.service?.name ?? "Sin servicio",
+          sessions_total: row.treatment?.sessions_total ?? null,
+          inicial: null,
+          final: null,
+        });
+      }
+      const g = groups.get(key)!;
+      if (row.stage === "inicial") g.inicial = row as Assessment;
+      else g.final = row as Assessment;
+    }
+    return [...groups.values()];
   });
 
 export const deleteAssessment = createServerFn({ method: "POST" })

@@ -150,6 +150,9 @@ export type Database = {
           photo_front: string | null
           photo_side: string | null
           recorded_at: string
+          report_at: string | null
+          report_client: string | null
+          report_staff: string | null
           sex: string | null
           stage: string
           thigh_left_cm: number | null
@@ -190,6 +193,9 @@ export type Database = {
           photo_front?: string | null
           photo_side?: string | null
           recorded_at?: string
+          report_at?: string | null
+          report_client?: string | null
+          report_staff?: string | null
           sex?: string | null
           stage: string
           thigh_left_cm?: number | null
@@ -230,6 +236,9 @@ export type Database = {
           photo_front?: string | null
           photo_side?: string | null
           recorded_at?: string
+          report_at?: string | null
+          report_client?: string | null
+          report_staff?: string | null
           sex?: string | null
           stage?: string
           thigh_left_cm?: number | null

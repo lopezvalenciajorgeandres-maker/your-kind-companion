@@ -14,8 +14,15 @@ import { Modal } from "@/components/app/kit";
 import { SignaturePad } from "@/components/app/signature-pad";
 import { BackupButtons } from "@/components/app/backup-buttons";
 import { closeTreatment, createTreatment, listTreatments, updateTreatment, type TreatmentSummary } from "@/lib/treatments.functions";
-import { listAssessments, saveAssessment, type Assessment, type AssessmentStage } from "@/lib/assessments.functions";
+import {
+  listAssessments,
+  saveAssessment,
+  saveAssessmentReport,
+  type Assessment,
+  type AssessmentStage,
+} from "@/lib/assessments.functions";
 import { AssessmentForm, guessCategory } from "@/components/app/assessment-form";
+import { AssessmentReport } from "@/components/app/assessment-report";
 import { useTenant } from "@/lib/use-tenant";
 import { formatMoney } from "@/lib/plan";
 import { listReceivables } from "@/lib/payments.functions";
@@ -98,6 +105,8 @@ function Agenda() {
   const [signAppt, setSignAppt] = useState<any | null>(null);
   // Ficha de valoración: se abre tras la firma, en la primera y en la última sesión.
   const [assessment, setAssessment] = useState<{ appt: any; stage: AssessmentStage } | null>(null);
+  // Informe comparativo que se ofrece al cerrar el tratamiento.
+  const [reportFor, setReportFor] = useState<{ treatmentId: string | null; appt: any } | null>(null);
   const [confirmUnlockDay, setConfirmUnlockDay] = useState<Date | null>(null);
   const [confirmUnlockSlot, setConfirmUnlockSlot] = useState<{ d: Date; m: number } | null>(null);
   const [confirmOffHours, setConfirmOffHours] = useState<{ d: Date; m: number } | null>(null);
@@ -142,6 +151,7 @@ function Agenda() {
   const completeAppt = useServerFn(completeAppointmentSession);
   const getAssessments = useServerFn(listAssessments);
   const saveAssess = useServerFn(saveAssessment);
+  const saveReport = useServerFn(saveAssessmentReport);
   const getTreatments = useServerFn(listTreatments);
   const getReceivables = useServerFn(listReceivables);
   const tenant = useTenant();
@@ -454,7 +464,7 @@ function Agenda() {
   });
 
   // Fichas ya guardadas del tratamiento que se está valorando.
-  const assessTreatmentId = assessment?.appt?.treatment_id ?? null;
+  const assessTreatmentId = assessment?.appt?.treatment_id ?? reportFor?.treatmentId ?? null;
   const assessments = useQuery({
     queryKey: ["assessments", assessTreatmentId],
     queryFn: () => getAssessments({ data: { treatment_id: assessTreatmentId } }),
@@ -463,12 +473,26 @@ function Agenda() {
 
   const saveAssessMut = useMutation({
     mutationFn: (v: any) => saveAssess({ data: v }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["assessments"] });
+    onSuccess: async (_r, v: any) => {
+      await qc.invalidateQueries({ queryKey: ["assessments"] });
+      const wasFinal = v?.stage === "final";
       setAssessment(null);
       toast.success("Ficha de valoración guardada");
+      // Al cerrar el tratamiento se ofrece el informe comparativo.
+      if (wasFinal) setReportFor({ treatmentId: v.treatment_id, appt: assessment?.appt });
     },
     onError: (e: any) => toast.error(e?.message ?? "No se pudo guardar la ficha"),
+  });
+
+  const saveReportMut = useMutation({
+    mutationFn: (v: { id: string; report_client: string; report_staff: string }) =>
+      saveReport({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assessments"] });
+      setReportFor(null);
+      toast.success("Informe guardado en la ficha del cliente");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "No se pudo guardar el informe"),
   });
 
   /**
@@ -1618,6 +1642,30 @@ function Agenda() {
           }}
         />
       )}
+
+      {reportFor &&
+        (() => {
+          const rows = assessments.data ?? [];
+          const ini = rows.find((a: Assessment) => a.stage === "inicial");
+          const fin = rows.find((a: Assessment) => a.stage === "final");
+          if (!ini || !fin) return null;
+          return (
+            <AssessmentReport
+              inicial={ini}
+              final={fin}
+              clientName={
+                [reportFor.appt?.client?.full_name, reportFor.appt?.client?.last_name]
+                  .filter(Boolean)
+                  .join(" ") || "Cliente"
+              }
+              serviceName={reportFor.appt?.service?.name}
+              businessName={tenant.business?.name}
+              saving={saveReportMut.isPending}
+              onClose={() => setReportFor(null)}
+              onSave={(v) => saveReportMut.mutate({ id: fin.id, ...v })}
+            />
+          );
+        })()}
 
       {editAppt && (
         <EditTimeModal

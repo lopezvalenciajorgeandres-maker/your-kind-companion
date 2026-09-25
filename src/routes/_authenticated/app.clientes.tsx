@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,6 +30,14 @@ type Client = {
 };
 
 function Clients() {
+  // Esta ruta es padre de /app/clientes/$id: sin Outlet, la ficha del cliente
+  // nunca llegaba a renderizarse y siempre se veía el listado.
+  const hasChild = useChildMatches().length > 0;
+  if (hasChild) return <Outlet />;
+  return <ClientsList />;
+}
+
+function ClientsList() {
   const qc = useQueryClient();
   const tenant = useTenant();
   const list = useServerFn(listClients);

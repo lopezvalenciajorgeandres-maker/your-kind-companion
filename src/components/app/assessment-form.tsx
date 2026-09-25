@@ -540,24 +540,9 @@ export function AssessmentForm({
             Registro fotográfico — {isFinal ? "DESPUÉS" : "ANTES"}
           </SectionTitle>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <PhotoSlot
-              label="Frente"
-              value={v.photo_front}
-              compare={isFinal ? baseline?.photo_front : null}
-              onChange={(x) => set("photo_front", x)}
-            />
-            <PhotoSlot
-              label="Perfil"
-              value={v.photo_side}
-              compare={isFinal ? baseline?.photo_side : null}
-              onChange={(x) => set("photo_side", x)}
-            />
-            <PhotoSlot
-              label="Espalda"
-              value={v.photo_back}
-              compare={isFinal ? baseline?.photo_back : null}
-              onChange={(x) => set("photo_back", x)}
-            />
+            <PhotoSlot label="Frente" value={v.photo_front} onChange={(x) => set("photo_front", x)} />
+            <PhotoSlot label="Perfil" value={v.photo_side} onChange={(x) => set("photo_side", x)} />
+            <PhotoSlot label="Espalda" value={v.photo_back} onChange={(x) => set("photo_back", x)} />
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
             En celular o tablet se abre la cámara directamente. Las fotos se comprimen automáticamente.
@@ -749,12 +734,10 @@ function Num({
 function PhotoSlot({
   label,
   value,
-  compare,
   onChange,
 }: {
   label: string;
   value: string | null;
-  compare?: string | null;
   onChange: (v: string | null) => void;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -787,13 +770,6 @@ function PhotoSlot({
           </button>
         )}
       </div>
-
-      {compare && (
-        <div className="mt-2">
-          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Antes</div>
-          <img src={compare} alt={`${label} antes`} className="mt-1 w-full rounded-lg object-cover" />
-        </div>
-      )}
 
       <button
         type="button"
