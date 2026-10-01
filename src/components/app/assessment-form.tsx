@@ -93,6 +93,21 @@ const CATEGORY_LABELS: Record<AssessmentCategory, string> = {
   postquirurgico: "Postquirúrgico",
 };
 
+/**
+ * Qué bloques pide cada especialidad. El servicio de la cita decide el perfil,
+ * así que la ficha solo muestra lo que de verdad se mide en ese tratamiento.
+ * Las fotos, la valoración propia y las observaciones van siempre.
+ */
+const CATEGORY_SECTIONS: Record<
+  AssessmentCategory,
+  { general: boolean; composition: boolean; measures: boolean }
+> = {
+  corporal: { general: true, composition: true, measures: true },
+  postquirurgico: { general: true, composition: true, measures: true },
+  laser: { general: false, composition: false, measures: false },
+  facial: { general: false, composition: false, measures: false },
+};
+
 /** Deduce la especialidad a partir del nombre del servicio. */
 export function guessCategory(serviceName?: string | null): AssessmentCategory {
   const n = (serviceName ?? "").toLowerCase();
@@ -286,7 +301,9 @@ export function AssessmentForm({
   }) => void;
   onClose: () => void;
 }) {
-  const [category, setCategory] = useState<AssessmentCategory>(existing?.category ?? initialCategory);
+  // El servicio de la cita define la especialidad: no se elige a mano.
+  const category: AssessmentCategory = existing?.category ?? initialCategory;
+  const sections = CATEGORY_SECTIONS[category];
   const [v, setV] = useState<AssessmentValues>(() => toValues(existing, client, baseline));
   const isFinal = stage === "final";
 
@@ -359,7 +376,12 @@ export function AssessmentForm({
     >
       <div className="space-y-6">
         <div className="rounded-xl bg-secondary/60 px-4 py-3 text-sm">
-          <div className="font-medium">{clientName}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{clientName}</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+              {CATEGORY_LABELS[category]}
+            </span>
+          </div>
           <div className="text-xs text-muted-foreground">
             {serviceName ? `${serviceName} · ` : ""}
             {isFinal
@@ -368,26 +390,7 @@ export function AssessmentForm({
           </div>
         </div>
 
-        <section>
-          <label className="text-xs font-medium text-foreground/80">Tipo de valoración</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(Object.keys(CATEGORY_LABELS) as AssessmentCategory[]).map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCategory(c)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${
-                  category === c
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:bg-secondary"
-                }`}
-              >
-                {CATEGORY_LABELS[c]}
-              </button>
-            ))}
-          </div>
-        </section>
-
+        {sections.general && (
         <section>
           <SectionTitle icon={Ruler}>Datos generales</SectionTitle>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -424,7 +427,9 @@ export function AssessmentForm({
             />
           </div>
         </section>
+        )}
 
+        {sections.composition && (
         <section>
           <SectionTitle icon={Activity}>Composición corporal (automática)</SectionTitle>
           {comp ? (
@@ -462,7 +467,9 @@ export function AssessmentForm({
             </div>
           )}
         </section>
+        )}
 
+        {sections.measures && (
         <section>
           <SectionTitle icon={Ruler}>Medidas corporales (cm)</SectionTitle>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -493,6 +500,7 @@ export function AssessmentForm({
             </div>
           )}
         </section>
+        )}
 
         <section>
           <SectionTitle>Valoración de {CATEGORY_LABELS[category].toLowerCase()}</SectionTitle>

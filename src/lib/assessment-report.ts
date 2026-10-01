@@ -151,6 +151,10 @@ export function clientRecommendations(r: ReportData, clientName: string): string
   if (r.best && r.best.diff < 0) {
     lines.push(`· Tu mejor zona fue ${r.best.label.toLowerCase()}: ${fmt(r.best.diff, "cm")}.`);
   }
+  // En láser y facial no se toman medidas: el resultado se ve en las fotos.
+  if (!r.totalCm && r.vitals.length === 0) {
+    lines.push("· Completaste tu tratamiento. Puedes ver el cambio comparando las fotos del antes y el después.");
+  }
   lines.push("");
 
   lines.push("RECOMENDACIONES PARA MANTENER TUS RESULTADOS");
@@ -211,11 +215,18 @@ export function staffRecommendations(r: ReportData): string {
     lines.push(`· Menor respuesta: ${r.worst.label} (${fmt(r.worst.diff, "cm")}, ${r.worst.pct.toFixed(1)}%).`);
   lines.push("");
 
+  const sinMetricas = !r.totalCm && r.vitals.length === 0;
+  if (sinMetricas) {
+    lines.push("· Protocolo sin medidas antropométricas: la evolución se valora por ficha clínica y registro fotográfico.");
+    lines.push("");
+  }
+
   lines.push("VALORACIÓN");
   const totalPct = r.totalCm && r.totalCm.before ? (r.totalCm.diff / r.totalCm.before) * 100 : 0;
   const muscle = r.vitals.find((v) => v.label === "Masa muscular");
   const fat = r.vitals.find((v) => v.label === "Grasa corporal");
-  if (totalPct <= -5) lines.push("· Respuesta muy favorable al protocolo aplicado.");
+  if (sinMetricas) lines.push("· Comparar la ficha inicial y la final junto a las fotos para valorar el resultado.");
+  else if (totalPct <= -5) lines.push("· Respuesta muy favorable al protocolo aplicado.");
   else if (totalPct < -1.5) lines.push("· Respuesta favorable, dentro de lo esperado.");
   else if (totalPct < 0) lines.push("· Respuesta discreta: los cambios son leves.");
   else lines.push("· Sin reducción medible. Revisar adherencia, técnica y frecuencia.");
