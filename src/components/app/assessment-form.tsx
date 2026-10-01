@@ -301,8 +301,13 @@ export function AssessmentForm({
   }) => void;
   onClose: () => void;
 }) {
-  // El servicio de la cita define la especialidad: no se elige a mano.
-  const category: AssessmentCategory = existing?.category ?? initialCategory;
+  // El servicio de la cita manda: no se elige a mano y prevalece sobre la
+  // categoría que tuviera guardada la ficha (podía venir mal de versiones
+  // anteriores, cuando el tipo se escogía a mano). Solo si la cita no tiene
+  // servicio se respeta lo que ya estaba guardado.
+  const category: AssessmentCategory = serviceName
+    ? initialCategory
+    : (existing?.category ?? initialCategory);
   const sections = CATEGORY_SECTIONS[category];
   const [v, setV] = useState<AssessmentValues>(() => toValues(existing, client, baseline));
   const isFinal = stage === "final";
