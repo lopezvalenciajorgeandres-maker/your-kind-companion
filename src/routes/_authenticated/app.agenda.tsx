@@ -1658,6 +1658,7 @@ function Agenda() {
                   .filter(Boolean)
                   .join(" ") || "Cliente"
               }
+              clientPhone={reportFor.appt?.client?.whatsapp || reportFor.appt?.client?.phone}
               serviceName={reportFor.appt?.service?.name}
               businessName={tenant.business?.name}
               saving={saveReportMut.isPending}

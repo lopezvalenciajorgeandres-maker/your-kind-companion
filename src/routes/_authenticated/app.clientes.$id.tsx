@@ -15,7 +15,8 @@ import {
   type Assessment,
   type ClientAssessmentGroup,
 } from "@/lib/assessments.functions";
-import { ArrowLeft, CalendarDays, FileText, Wallet, Star } from "lucide-react";
+import { printClinicalHistory } from "@/lib/clinical-history";
+import { ArrowLeft, CalendarDays, FileText, Printer, Sparkles, Wallet, Star } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/clientes/$id")({ component: ClientDetail });
 
@@ -62,6 +63,23 @@ function ClientDetail() {
           title={`${client.full_name} ${client.last_name ?? ""}`}
           subtitle={[client.whatsapp || client.phone, client.email, client.source].filter(Boolean).join(" Â· ")}
           action={
+            <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary"
+              onClick={() =>
+                printClinicalHistory({
+                  client,
+                  treatments: data?.treatments ?? [],
+                  appointments: (data?.appointments ?? []) as never,
+                  groups: groups.data ?? [],
+                  businessName: tenant.business?.name,
+                  currency: tenant.currency,
+                })
+              }
+            >
+              <Printer className="h-4 w-4" /> Historia clínica (PDF)
+            </button>
             <WhatsAppMenu
               phone={client.whatsapp || client.phone}
               message={reminderMessage({
@@ -71,6 +89,7 @@ function ClientDetail() {
                 startsAt: data?.appointments?.[0]?.starts_at,
               })}
             />
+            </div>
           }
         />
       </div>
@@ -85,6 +104,50 @@ function ClientDetail() {
           icon={Star}
         />
       </div>
+
+      <Panel className="mt-6">
+        <div className="flex items-center justify-between p-5 pb-2">
+          <h2 className="font-serif text-lg">Historial de tratamientos</h2>
+          <span className="text-xs text-muted-foreground">Sesiones, valores y saldos</span>
+        </div>
+        <div className="divide-y divide-border">
+          {(data?.treatments ?? []).length === 0 && (
+            <EmptyState title="Sin tratamientos registrados" body="Se crean al agendar una cita con tratamiento por sesiones." />
+          )}
+          {(data?.treatments ?? []).map((t) => (
+            <div key={t.id} className="p-4 flex flex-wrap items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">
+                  {t.service_name}
+                  {t.name ? ` — ${t.name}` : ""}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Desde {new Date(t.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+                  {" · "}
+                  {t.sessions_done}/{t.sessions_total} sesiones
+                  {" · "}
+                  {formatMoney(t.total_cents, tenant.currency)}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold ${
+                    t.balance_cents > 0 ? "bg-amber-500/20 text-amber-600" : "bg-emerald-500/20 text-emerald-600"
+                  }`}
+                >
+                  {t.balance_cents > 0 ? `Saldo ${formatMoney(t.balance_cents, tenant.currency)}` : "Pagado"}
+                </span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                  {t.status === "closed" ? "Finalizado" : "En curso"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
 
       <Panel className="mt-6">
         <div className="flex items-center justify-between p-5 pb-2">
@@ -136,6 +199,7 @@ function ClientDetail() {
           inicial={report.inicial}
           final={report.final}
           clientName={`${client.full_name} ${client.last_name ?? ""}`.trim()}
+          clientPhone={client.whatsapp || client.phone}
           serviceName={report.service_name}
           businessName={tenant.business?.name}
           saving={saveReportMut.isPending}

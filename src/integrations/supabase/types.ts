@@ -515,6 +515,31 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           booking_phone?: string | null
           business_name: string
           contact_phone?: string | null
@@ -531,6 +556,31 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           booking_phone?: string | null
           business_name?: string
           contact_phone?: string | null
@@ -574,6 +624,31 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           booking_enabled?: boolean
           business_type?: string
           city?: string | null
@@ -598,6 +673,31 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           booking_enabled?: boolean
           business_type?: string
           city?: string | null
@@ -670,6 +770,31 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          alcohol: string | null
+          allergies: string | null
+          antidepressants: string | null
+          arrhythmia: string | null
+          blood_type: string | null
+          cancer: string | null
+          companion_name: string | null
+          companion_relationship: string | null
+          diseases: string | null
+          document_id: string | null
+          family_history: string | null
+          fatty_liver: string | null
+          health_insurance: string | null
+          hernias: string | null
+          implants: string | null
+          landline: string | null
+          last_period: string | null
+          marital_status: string | null
+          medications: string | null
+          pacemaker: string | null
+          skin_biotype: string | null
+          skin_phototype: string | null
+          smoking: string | null
+          stomach_mesh: string | null
+          surgeries: string | null
           birthdate: string | null
           business_id: string
           city: string | null
@@ -691,6 +816,31 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           birthdate?: string | null
           business_id: string
           city?: string | null
@@ -712,6 +862,31 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          alcohol?: string | null
+          allergies?: string | null
+          antidepressants?: string | null
+          arrhythmia?: string | null
+          blood_type?: string | null
+          cancer?: string | null
+          companion_name?: string | null
+          companion_relationship?: string | null
+          diseases?: string | null
+          document_id?: string | null
+          family_history?: string | null
+          fatty_liver?: string | null
+          health_insurance?: string | null
+          hernias?: string | null
+          implants?: string | null
+          landline?: string | null
+          last_period?: string | null
+          marital_status?: string | null
+          medications?: string | null
+          pacemaker?: string | null
+          skin_biotype?: string | null
+          skin_phototype?: string | null
+          smoking?: string | null
+          stomach_mesh?: string | null
+          surgeries?: string | null
           birthdate?: string | null
           business_id?: string
           city?: string | null

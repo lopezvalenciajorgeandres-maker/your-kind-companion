@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Modal, btnGhost, btnPrimary, inputClass } from "./kit";
-import { Printer, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { MessageCircle, Printer, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
   buildReport,
   clientRecommendations,
@@ -16,6 +16,7 @@ export function AssessmentReport({
   inicial,
   final,
   clientName,
+  clientPhone,
   serviceName,
   businessName,
   saving,
@@ -25,6 +26,8 @@ export function AssessmentReport({
   inicial: Assessment;
   final: Assessment;
   clientName: string;
+  /** Para ofrecer el envío del informe por WhatsApp. */
+  clientPhone?: string | null;
   serviceName?: string | null;
   businessName?: string | null;
   saving?: boolean;
@@ -61,25 +64,52 @@ export function AssessmentReport({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className={btnGhost}
-            onClick={() =>
-              printReport({
-                data,
-                audience,
-                text,
-                clientName,
-                serviceName,
-                businessName,
-                inicial,
-                final,
-              })
-            }
-          >
-            <Printer className="h-4 w-4" /> Imprimir / Guardar PDF
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={btnGhost}
+              onClick={() =>
+                printReport({
+                  data,
+                  audience,
+                  text,
+                  clientName,
+                  serviceName,
+                  businessName,
+                  inicial,
+                  final,
+                })
+              }
+            >
+              <Printer className="h-4 w-4" /> Imprimir / Guardar PDF
+            </button>
+            {audience === "cliente" && clientPhone && (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90"
+                onClick={() => {
+                  // Primero se abre el PDF para guardarlo; WhatsApp Web no permite
+                  // adjuntar archivos desde un enlace, así que el adjunto lo pone el usuario.
+                  printReport({ data, audience, text, clientName, serviceName, businessName, inicial, final });
+                  const msg = whatsAppMessage(data, clientName, serviceName, businessName);
+                  window.open(
+                    `https://wa.me/${clientPhone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`,
+                    "_blank",
+                  );
+                }}
+              >
+                <MessageCircle className="h-4 w-4" /> Enviar por WhatsApp
+              </button>
+            )}
+          </div>
         </div>
+
+        {audience === "cliente" && clientPhone && (
+          <p className="rounded-xl bg-secondary/60 px-4 py-2 text-[11px] text-muted-foreground">
+            Al enviar por WhatsApp se abre el PDF para que lo guardes y, enseguida, el chat con el mensaje listo.
+            Solo falta que adjuntes el archivo guardado: WhatsApp no permite adjuntarlo automáticamente.
+          </p>
+        )}
 
         <ComparisonTables data={data} audience={audience} />
 
@@ -252,6 +282,27 @@ function Table({ title, rows }: { title: string; rows: Row[] }) {
         </table>
       </div>
     </div>
+  );
+}
+
+/** Mensaje que acompaña al informe cuando se envía por WhatsApp. */
+function whatsAppMessage(
+  data: ReportData,
+  clientName: string,
+  serviceName?: string | null,
+  businessName?: string | null,
+): string {
+  const first = clientName.split(" ")[0] || "";
+  const logro = data.totalCm
+    ? data.totalCm.diff < 0
+      ? `Lograste una reducción total de ${Math.abs(data.totalCm.diff).toFixed(1)} cm. `
+      : ""
+    : "";
+  return (
+    `¡Hola ${first}! 🌿 Terminamos tu tratamiento${serviceName ? ` de ${serviceName}` : ""} y te comparto el informe con tus resultados. ` +
+    logro +
+    `Adjunto el PDF con la comparación del antes y el después y las recomendaciones para mantenerlos. ` +
+    `¡Gracias por confiar en ${businessName || "nosotros"}!`
   );
 }
 
